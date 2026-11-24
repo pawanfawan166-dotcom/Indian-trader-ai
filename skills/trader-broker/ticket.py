@@ -5,7 +5,7 @@ This tool never talks to a broker and never places anything. It does its
 work around the one moment that matters, your yes:
 
   show      renders each proposed order as a plain-English ticket plus the
-            exact JSON Claude will send to Alpaca's place_stock_order tool.
+            the order's JSON template. NSE (.NS) tickets are paper-only.
             A bracket order shows its stop-loss, take-profit and the max loss
             at the stop. An order is READY only if trader-risk passed THIS
             exact order today (matched by fingerprint) and nobody has decided
@@ -25,12 +25,12 @@ work around the one moment that matters, your yes:
     python3 ticket.py show --index 1 --json   # one ticket as JSON
     python3 ticket.py approve --index 1 --reply "yes"
     python3 ticket.py result --index 1 --status placed --broker-id 61e6...
-    python3 ticket.py fill --symbol TSLA --side buy --qty 8 --price 364.20
-    python3 ticket.py flatten --symbol TSLA --qty 8
+    python3 ticket.py fill --symbol RELIANCE --side buy --qty 8 --price 1420
+    python3 ticket.py flatten --symbol RELIANCE --qty 8
     python3 ticket.py log
 
 Everything is written to trader/state/broker.json (append only). Dates are
-New York dates; --now "2026-10-19 10:15" pins the clock.
+IST dates; --now "2026-10-19 10:15" pins the clock.
 """
 
 import argparse
@@ -59,55 +59,43 @@ class TicketError(Exception):
     pass
 
 
-# ---------------------------------------------------------------- time (New York, no tz files)
+# ---------------------------------------------------------------- time
 
-def _nth_sunday(year, month, n):
-    d = datetime.date(year, month, 1)
-    d += datetime.timedelta(days=(6 - d.weekday()) % 7)
-    return d + datetime.timedelta(weeks=n - 1)
+IST = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
 
 
-def eastern_offset(utc):
-    """Hours from UTC for New York: -4 in daylight time, -5 otherwise.
-    DST runs from 2:00 a.m. on the second Sunday of March to 2:00 a.m. on the
-    first Sunday of November (US rule since 2007)."""
-    y = utc.year
-    start = datetime.datetime.combine(_nth_sunday(y, 3, 2), datetime.time(7, 0))   # 2:00 EST
-    end = datetime.datetime.combine(_nth_sunday(y, 11, 1), datetime.time(6, 0))    # 2:00 EDT
-    naive = utc.replace(tzinfo=None)
-    return -4 if start <= naive < end else -5
+def to_ist(utc):
+    if utc.tzinfo is not None:
+        utc = utc.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+    return utc + datetime.timedelta(hours=5, minutes=30)
 
 
-def to_eastern(utc):
-    return utc.replace(tzinfo=None) + datetime.timedelta(hours=eastern_offset(utc))
-
-
-def eastern_to_utc(local):
-    for off in (-4, -5):
-        utc = local - datetime.timedelta(hours=off)
-        if eastern_offset(utc) == off:
-            return utc
-    return local + datetime.timedelta(hours=5)
+def ist_to_utc(local):
+    return local - datetime.timedelta(hours=5, minutes=30)
 
 
 def parse_now(text):
-    """ISO time -> naive UTC. A time without an offset is taken as New York time."""
+    """ISO time -> naive UTC. A time without an offset is taken as IST."""
     if not text:
         return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0, tzinfo=None)
     t = text.strip().replace("Z", "+00:00")
     try:
         dt = datetime.datetime.fromisoformat(t)
     except ValueError:
-        raise TicketError("--now wants a time like \"2026-10-19 10:15\" (New York) or ...Z (UTC)")
+        raise TicketError("--now wants a time like \"2026-10-19 10:15\" (IST) or ...Z (UTC)")
     if dt.tzinfo is None:
-        return eastern_to_utc(dt)
+        return ist_to_utc(dt)
     return (dt - dt.utcoffset()).replace(tzinfo=None)
 
 
-def ny_iso(now_utc):
-    """naive UTC -> "2026-10-19T10:15:00-04:00" (New York wall clock with its offset)."""
-    off = eastern_offset(now_utc)
-    return "%s%+03d:00" % (to_eastern(now_utc).replace(microsecond=0).isoformat(), off)
+def ist_iso(now_utc):
+    """naive UTC -> ISO timestamp with the IST offset."""
+    return to_ist(now_utc).replace(microsecond=0, tzinfo=IST).isoformat()
+
+
+def nse_symbol(symbol):
+    symbol = str(symbol or "").strip().upper()
+    return symbol if not symbol or symbol.endswith(".NS") else symbol + ".NS"
 
 
 # ---------------------------------------------------------------- files
@@ -179,11 +167,11 @@ def tool_input(order):
 def _money(v):
     f = float(v)
     s = "{:,.2f}".format(f)
-    return "$" + (s[:-3] if s.endswith(".00") else s)
+    return "₹" + (s[:-3] if s.endswith(".00") else s)
 
 
 def _p(v):
-    return "%.2f" % float(v)
+    return "₹%.2f" % float(v)
 
 
 def is_bracket(order):
@@ -193,7 +181,7 @@ def is_bracket(order):
 
 
 def max_loss(order):
-    """(dollars, stop) lost if the stop fills exactly at the stop, or (None, stop)."""
+    """(INR, stop) lost if the stop fills exactly at the stop, or (None, stop)."""
     stop = _f(order.get("stop_loss_stop_price")) or _f((order.get("plan") or {}).get("stop"))
     q = _f(order.get("qty"))
     if not stop or not q:
@@ -249,8 +237,7 @@ def plain_parts(order):
 
 
 def plain(order):
-    """BUY $1,250 of AAPL, market order, good for today
-    BUY 8 TSLA, market, good for today / stop-loss 358.32 / take-profit 370.04 / max loss about $46.88 ..."""
+    """BUY ₹1,250 of RELIANCE.NS, market order, good for today."""
     return " / ".join(plain_parts(order))
 
 
@@ -335,7 +322,9 @@ def status_of(order, risk, state, today):
     if rec:
         st = rec.get("status")
         if st == "approved":
-            return False, "APPROVED by you at %s, waiting for the place_stock_order call" % rec.get("at"), rv
+            action = ("external paper-broker outcome" if str(order.get("symbol", "")).upper().endswith(".NS")
+                      else "place_stock_order call")
+            return False, "APPROVED by you at %s, waiting for %s" % (rec.get("at"), action), rv
         return False, "DONE: %s at %s" % (st, rec.get("at")), rv
     return True, "READY: trader-risk PASS, waiting for your yes", rv
 
@@ -352,20 +341,28 @@ def kind_of(order, rv):
 def render(order, idx, total, cfg, risk, state, today):
     ready, label, rv = status_of(order, risk, state, today)
     broker = str(cfg.get("broker", "alpaca")).lower()
+    is_nse = str(order.get("symbol", "")).upper().endswith(".NS")
     paper = cfg.get("paper", True)
-    acct = "PAPER account" if paper else "LIVE ACCOUNT, REAL MONEY"
+    acct = "PAPER account (INR)" if paper or is_nse else "LIVE ACCOUNT, REAL MONEY"
     lines = ["ORDER %d of %d, %s, %s" % (idx, total, acct, "Interactive Brokers" if broker == "ibkr" else "Alpaca")]
     for part in plain_parts(order):
         lines.append("  " + part)
     if order.get("why"):
         lines.append("  why: " + order["why"])
     lines.append("  " + label)
+    if is_nse:
+        lines.append("  NSE paper ticket only: this script does not submit orders; Alpaca's place_stock_order")
+        lines.append("  is not an NSE routing integration. Use a broker that explicitly supports NSE equities.")
     for w in (rv or {}).get("warnings", []):
         lines.append("  note: " + w)
-    if broker == "ibkr":
+    if is_nse:
+        lines.append("  JSON template (not an executable NSE order):")
+        for l in json.dumps(tool_input(order), indent=2).splitlines():
+            lines.append("    " + l)
+    elif broker == "ibkr":
         lines.append("  Claude drafts this with the Interactive Brokers connector. IBKR sends it to your")
         lines.append("  IBKR account, and it only goes to the market after you approve it there.")
-    else:
+    elif not is_nse:
         lines.append("  Claude will call place_stock_order with exactly:")
         for l in json.dumps(tool_input(order), indent=2).splitlines():
             lines.append("    " + l)
@@ -373,8 +370,9 @@ def render(order, idx, total, cfg, risk, state, today):
             lines.append("  Alpaca places the entry, then the stop-loss and the take-profit as two orders")
             lines.append("  that cancel each other: when one fills, the other is canceled.")
     if ready:
-        lines.append("  Reply \"yes\" to place this one order, or \"no\" to skip it.")
-        if broker != "ibkr":
+        lines.append("  Reply \"yes\" to approve this one paper ticket, or \"no\" to skip it." if is_nse else
+                     "  Reply \"yes\" to place this one order, or \"no\" to skip it.")
+        if broker != "ibkr" and not is_nse:
             lines.append("  Claude's own card then asks again: Allow once places it, Deny stops it.")
     return "\n".join(lines), ready
 
@@ -400,15 +398,16 @@ def apply_fill(portfolio_path, cfg, symbol, side, qty, price, date):
         if not budget:
             raise TicketError("no %s yet and no budget in the config to start it from" % portfolio_path)
         pf = {"cash": float(budget), "positions": []}
-    symbol = symbol.upper()
+    symbol = nse_symbol(symbol)
     qty, price = float(qty), float(price)
     if qty <= 0 or price <= 0:
         raise TicketError("a fill needs a positive qty and price")
     cost = round(qty * price, 2)
     pos = None
     for p in pf.setdefault("positions", []):
-        if str(p.get("ticker", "")).upper() == symbol:
+        if nse_symbol(p.get("ticker", "")) == symbol:
             pos = p
+            p["ticker"] = symbol
     if side == "buy":
         if pos is None:
             pos = {"ticker": symbol, "shares": 0.0, "lots": []}
@@ -443,7 +442,7 @@ def log_fill(state_path, now, today, symbol, side, qty, price):
     """A fill in the log, so trader-risk can count day trades (a buy and a sell the same day)."""
     state = load_state(state_path)
     state.setdefault("orders", []).append({
-        "at": ny_iso(now), "date": today, "status": "filled", "symbol": symbol.upper(), "side": side,
+        "at": ist_iso(now), "date": today, "status": "filled", "symbol": nse_symbol(symbol), "side": side,
         "qty": _str_num(float(qty)), "price": float(price),
         "plain": "%s %s %s at %s" % (side.upper(), _str_num(float(qty)), symbol.upper(), _p(price))})
     write_json(state_path, state)
@@ -453,7 +452,7 @@ def log_fill(state_path, now, today, symbol, side, qty, price):
 
 def _clock(a):
     now = parse_now(getattr(a, "now", None))
-    today = getattr(a, "today", None) or to_eastern(now).date().isoformat()
+    today = getattr(a, "today", None) or to_ist(now).date().isoformat()
     if not re.match(r"^\d{4}-\d{2}-\d{2}$", today):
         raise TicketError("--today wants a date like 2026-10-19")
     return now, today
@@ -508,7 +507,7 @@ def cmd_approve(a):
         print("Not recorded: %s. Ask the user again with the ticket for order %d." % (why, a.index))
         return 1
     loss, stop = max_loss(order)
-    rec = {"at": ny_iso(now), "date": today, "index": a.index, "fingerprint": fingerprint(order),
+    rec = {"at": ist_iso(now), "date": today, "index": a.index, "fingerprint": fingerprint(order),
            "symbol": str(order.get("symbol", "")).upper(), "side": order.get("side"),
            "qty": order.get("qty"), "kind": kind_of(order, rv), "max_loss": loss, "stop": stop,
            "plain": plain(order), "status": "approved", "reply": a.reply,
@@ -516,7 +515,9 @@ def cmd_approve(a):
     state.setdefault("orders", []).append(rec)
     write_json(a.state, state)
     print("Recorded your yes for order %d: %s." % (a.index, plain(order)))
-    if str(cfg.get("broker", "alpaca")).lower() == "ibkr":
+    if str(order.get("symbol", "")).upper().endswith(".NS"):
+        print("No order was submitted. Do not send an .NS symbol to Alpaca place_stock_order.")
+    elif str(cfg.get("broker", "alpaca")).lower() == "ibkr":
         print("Now draft it with the Interactive Brokers connector; approve it in your IBKR account.")
     else:
         print("Now call place_stock_order with exactly:")
@@ -529,7 +530,7 @@ def cmd_approve(a):
 def cmd_decline(a):
     orders, cfg, risk, state, today, now = _load(a)
     order = _pick(orders, a.index)
-    rec = {"at": ny_iso(now), "date": today, "index": a.index, "fingerprint": fingerprint(order),
+    rec = {"at": ist_iso(now), "date": today, "index": a.index, "fingerprint": fingerprint(order),
            "symbol": str(order.get("symbol", "")).upper(), "side": order.get("side"),
            "plain": plain(order), "status": "declined", "reply": a.reply or "no"}
     state.setdefault("orders", []).append(rec)
@@ -545,7 +546,7 @@ def cmd_result(a):
     rec = latest(state, fp, today)
     if not rec or rec.get("status") != "approved":
         raise TicketError("order %d has no yes recorded today; a result can only follow an approval" % a.index)
-    new = {"at": ny_iso(now), "date": today, "index": a.index, "fingerprint": fp, "symbol": rec["symbol"],
+    new = {"at": ist_iso(now), "date": today, "index": a.index, "fingerprint": fp, "symbol": rec["symbol"],
            "side": rec["side"], "plain": rec["plain"], "status": a.status}
     for k in ("qty", "kind", "max_loss", "stop"):
         if rec.get(k) is not None:
@@ -572,12 +573,13 @@ def cmd_result(a):
 def cmd_fill(a):
     cfg = read_json(a.config, "config", required=False) or {}
     now = parse_now(a.now)
-    date = a.date or to_eastern(now).date().isoformat()
+    date = a.date or to_ist(now).date().isoformat()
     if not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
         raise TicketError("--date wants a date like 2026-10-19")
-    pf = apply_fill(a.portfolio, cfg, a.symbol, a.side, a.qty, a.price, date)
-    log_fill(a.state, now, date, a.symbol, a.side, a.qty, a.price)
-    print("Recorded %s %s %s at %s on %s in %s. Cash now %s." % (a.side, a.qty, a.symbol.upper(),
+    sym = nse_symbol(a.symbol)
+    pf = apply_fill(a.portfolio, cfg, sym, a.side, a.qty, a.price, date)
+    log_fill(a.state, now, date, sym, a.side, a.qty, a.price)
+    print("Recorded %s %s %s at %s on %s in %s. Cash now %s." % (a.side, a.qty, sym,
                                                                 _money(a.price), date, a.portfolio,
                                                                 _money(pf["cash"])))
     return 0
@@ -585,7 +587,7 @@ def cmd_fill(a):
 
 def cmd_flatten(a):
     cfg = read_json(a.config, "config", required=False) or {}
-    sym = a.symbol.strip().upper()
+    sym = nse_symbol(a.symbol)
     now, today = _clock(a)
     source = "the broker, get_open_position"
     if a.qty is not None:
@@ -595,25 +597,25 @@ def cmd_flatten(a):
     else:
         pf = read_json(a.portfolio, "portfolio", required=False) or {}
         qty = sum(_f(p.get("shares", p.get("qty"))) or 0 for p in pf.get("positions", [])
-                  if str(p.get("ticker") or p.get("symbol") or "").upper() == sym)
+                  if nse_symbol(p.get("ticker") or p.get("symbol")) == sym)
         source = a.portfolio
         if qty <= 1e-9:
             raise TicketError("nothing to flatten: no %s shares in %s. Check the broker (get_open_position "
                               "%s) and pass --qty if you do hold some" % (sym, a.portfolio, sym))
     plan = read_json(a.plan, "plan", required=False) or {}
-    flat_by = (plan.get("flat_by") if str(plan.get("symbol", "")).upper() == sym else None) \
-        or cfg.get("flat_by") or "15:55"
+    flat_by = (plan.get("flat_by") if nse_symbol(plan.get("symbol")) == sym else None) \
+        or cfg.get("flat_by") or "15:25"
     order = {"symbol": sym, "side": "sell", "qty": _str_num(qty), "type": "market", "time_in_force": "day",
-             "why": "flat by %s New York: closes the %s day trade before the close (qty from %s)"
+             "why": "flat by %s IST: closes the %s day trade before the close (qty from %s)"
              % (flat_by, sym, source)}
     old = read_json(a.orders, "orders", required=False)
     replaced = len(old.get("orders", [])) if isinstance(old, dict) else 0
-    doc = {"created_by": "trader-broker", "created_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "status": "proposed",
+    doc = {"created_by": "trader-broker", "created_at": ist_iso(now), "status": "proposed",
            "paper": bool(cfg.get("paper", True)),
            "note": "Flatten ticket. Nothing is placed until trader-risk passes it and you say yes in the chat.",
            "source": "ticket.py flatten %s on %s" % (sym, today), "orders": [order]}
     write_json(a.orders, doc)
-    print("Flatten %s: %s (flat by %s New York)." % (sym, plain(order), flat_by))
+    print("Flatten %s: %s (flat by %s IST)." % (sym, plain(order), flat_by))
     print("Wrote it to %s%s." % (a.orders, (" (it replaced %d earlier proposal%s)"
                                              % (replaced, "" if replaced == 1 else "s")) if replaced else ""))
     if a.qty is None:
@@ -622,9 +624,7 @@ def cmd_flatten(a):
     print("  1. trader-risk: check.py. A sell that only closes what you hold is never blocked by the daily")
     print("     limits or the entry window.")
     print("  2. ticket.py show, then the user's yes for this one order.")
-    print("  3. If the bracket's stop-loss and take-profit are still open, Alpaca holds these shares for them")
-    print("     and rejects a new sell. Cancel them first: get_orders (status open, nested true), then")
-    print("     cancel_order_by_id for each open leg (Needs approval). Then place_stock_order with the ticket.")
+    print("  3. This NSE ticket is a paper proposal only; this script does not submit it to a broker.")
     return 0
 
 
@@ -651,8 +651,8 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd")
 
     def clock(p):
-        p.add_argument("--now", help="pretend it is this New York time, e.g. \"2026-10-19 10:15\"")
-        p.add_argument("--today", help="YYYY-MM-DD (default: today in New York)")
+        p.add_argument("--now", help="pretend it is this IST time, e.g. \"2026-10-19 10:15\"")
+        p.add_argument("--today", help="YYYY-MM-DD (default: today in IST)")
 
     def common(p):
         p.add_argument("--orders", default="trader/orders.json")
@@ -687,7 +687,7 @@ def main(argv=None):
     p.add_argument("--side", required=True, choices=["buy", "sell"])
     p.add_argument("--qty", required=True)
     p.add_argument("--price", required=True)
-    p.add_argument("--date", help="YYYY-MM-DD (default: today in New York)")
+    p.add_argument("--date", help="YYYY-MM-DD (default: today in IST)")
     p.add_argument("--now")
     p.add_argument("--portfolio", default="trader/portfolio.json")
     p.add_argument("--config", default="trader/config.json")

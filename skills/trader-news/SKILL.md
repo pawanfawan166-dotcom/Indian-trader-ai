@@ -2,12 +2,12 @@
 name: trader-news
 description: >-
   News Monitor. Tracks breaking news on every stock you watch and flags what
-  moves it: Yahoo Finance headlines per ticker, each company's 8-K filings on
-  SEC EDGAR (earnings, CEO changes, deals, restatements, bankruptcy) and how
+  moves it: Yahoo Finance and Google News India headlines per NSE ticker,
+  optional SEC filings for explicitly marked `.US` tickers, and how
   far each stock is from yesterday's close. Shows only what is new since the
-  last check, newest first, in New York time, tags each item (earnings,
+  last check, newest first, in IST, tags each item (earnings,
   analyst, deal, halt, regulatory, macro...) and never repeats one. Use when
-  the user says "any news on TSLA", "why is this moving", "what's the news on
+  the user says "any news on RELIANCE", "why is this moving", "what's the news on
   my watchlist", "morning briefing", "pre-market news", "monitor the news",
   "did anything break", "check the 8-Ks", or after /trader-scanner finds setups.
 argument-hint: "[tickers]"
@@ -25,7 +25,7 @@ Tool in this folder (standard library Python, no keys):
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/news.py"                         # watchlist + plan + portfolio
-python3 "${CLAUDE_SKILL_DIR}/news.py" --tickers TSLA NVDA --hours 12
+python3 "${CLAUDE_SKILL_DIR}/news.py" --tickers RELIANCE TCS --hours 12
 python3 "${CLAUDE_SKILL_DIR}/news.py" --no-sec --json
 ```
 
@@ -36,9 +36,10 @@ python3 "${CLAUDE_SKILL_DIR}/news.py" --no-sec --json
 | `--tickers`, else `trader/watchlist.json` | the scanner's hits (trader-scanner) |
 | `trader/plan.json` | the trade you are planning (trader-exit) |
 | `trader/portfolio.json` | what you hold (trader-broker records fills there) |
-| Yahoo Finance headline RSS | `https://feeds.finance.yahoo.com/rss/2.0/headline?s=TSLA&region=US&lang=en-US` |
-| Yahoo Finance chart endpoint | the last price against yesterday's close (unofficial, can lag) |
-| SEC EDGAR company Atom feed | 8-K by default (`--forms 8-K,10-Q` for more); needs `sec_user_agent` in `trader/config.json` or `SEC_USER_AGENT`, else filings are skipped with a note |
+| Yahoo Finance headline RSS | India settings, NSE symbol such as `RELIANCE.NS` |
+| Google News India RSS | Search results for each NSE symbol and Indian-market context |
+| Yahoo Finance chart endpoint | the last INR (₹) price against yesterday's close (unofficial, can lag) |
+| SEC EDGAR company Atom feed | used only for explicit `.US` symbols; needs `sec_user_agent` or `SEC_USER_AGENT` |
 | `trader/state/news.json` | what has been shown (kept 30 days) and each ticker's CIK |
 
 ## The rules
@@ -47,7 +48,7 @@ python3 "${CLAUDE_SKILL_DIR}/news.py" --no-sec --json
   happened, open the story or the filing and read it. Quote the source and
   link it. Never summarise a paywalled story you could not read: say so.
 - **Filings beat headlines.** If an 8-K and a headline disagree, the 8-K is
-  what the company told the SEC.
+  what a U.S. company told the SEC. NSE symbols do not get SEC lookups.
 - **Say what it touches.** Every item lists the tickers it touches and its
   tags: earnings, analyst, legal, deal, capital, people, risk, halt,
   regulatory, macro. Filings marked `!` carry an important 8-K item: earnings
@@ -78,16 +79,10 @@ morning before the open.
 
 ## Example: the reel
 
-Monday 2026-10-19, TSLA broke its opening range at 10:15 AM ET. The check at
-10:15 (Yahoo Finance's TSLA feed, 16 headlines since 8:00) leads with the
-morning's real stories: "Meta and Musk earnings and September pending home
-sales: What to Watch" (8:00, earnings), "Tesla-SpaceX Merger Mania Strikes
-Wall Street Ahead of Earnings" (8:04, earnings, deal), "Tech Stock Rebound
-Nudges US Equity Futures Mostly Higher Pre-Bell" (8:02, macro). The brief:
-"Tesla reports this week, so the stock can gap overnight; today's trade is
-in and out before the close. No new 8-K." At 10:52 the price line reads
-`TSLA 366.48 +3.31% vs yesterday's close 354.72 at 10:52 ET  MOVING`. When a
-ticker has no news, say so rather than padding the brief.
+Use `RELIANCE` or `RELIANCE.NS` to get India-region Yahoo headlines, Google
+News India results and an INR price line. Example shape:
+`<TICKER>.NS ₹<price> <move>% vs yesterday's close ₹<close> at <time> IST`.
+Do not invent stories or treat an RSS search result as verified reporting.
 
 ## What it never does
 

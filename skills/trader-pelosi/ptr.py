@@ -1,38 +1,14 @@
 #!/usr/bin/env python3
-"""Congress trade tracker for trader-pelosi. Standard library only.
+"""NSE promoter/insider and bulk/block-deal tracker for trader-pelosi.
 
-Reads the House Clerk's public financial disclosure index and the Periodic
-Transaction Reports (PTRs) members of the House file when they, their spouse
-or a dependent child buy or sell a stock.
-
-    python3 ptr.py index --member pelosi                 # this year's PTRs by a member
-    python3 ptr.py index --year 2026 --since 2026-10-01  # every PTR filed since a date
-    python3 ptr.py new --member pelosi                   # only what is new since last check
-    python3 ptr.py fetch 20035143                        # download one PTR and read it
-    python3 ptr.py parse ptr.txt --filed 2026-08-21      # rows from `pdftotext -layout` text
-
-Where the data comes from:
-  - The index: https://disclosures-clerk.house.gov/public_disc/financial-pdfs/<YEAR>FD.zip
-    (a ZIP with <YEAR>FD.xml: one <Member> per filing, FilingType P = PTR).
-  - Each PTR: https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/<YEAR>/<DocID>.pdf
-  - Reading a PDF needs `pdftotext` (poppler) if you want rows from this tool.
-    Without it, the tool prints the PDF path and Claude reads the PDF itself.
-
-What a PTR is, and is not:
-  - It is a PUBLIC disclosure under the STOCK Act, due within 30 days of the
-    member learning of the trade and never later than 45 days after it. So it
-    arrives days or weeks after the trade, and amounts are ranges, not prices.
-  - Reading them fast is not inside information. There is none here.
-  - This covers the House. Senate PTRs are on efdsearch.senate.gov behind an
-    agreement you must accept yourself; see SKILL.md for the manual route.
-
-State: `new` remembers which DocIDs it has shown in trader/state/pelosi.json,
-so each PTR alerts once. Offline: --offline FILE reads a saved <YEAR>FD.zip
-(or the .xml inside it) instead of the network. The tests use it.
+The existing index/new/fetch/parse commands are retained. The live data source
+is NSE's latest bulk/block-deal snapshot; `--offline` accepts a saved JSON
+snapshot. A last-successful snapshot is used if NSE blocks a request.
 """
 
 import argparse
 import datetime as _dt
+import hashlib
 import io
 import json
 import os
@@ -48,7 +24,13 @@ import zipfile
 INDEX_URL = "https://disclosures-clerk.house.gov/public_disc/financial-pdfs/%d%s.zip"
 PTR_URL = "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/%d/%s.pdf"
 FD_URL = "https://disclosures-clerk.house.gov/public_disc/financial-pdfs/%d/%s.pdf"
-UA = "day-trader-skill/2.0 (+https://github.com/Jakeschincariol/day-trader-skill)"
+NSE_DEALS_URL = "https://www.nseindia.com/api/snapshot-capital-market-largedeal?index=all"
+NSE_DEALS_PAGE = "https://www.nseindia.com/market-data/large-deals"
+NSE_CACHE = "trader/state/nse-deals-cache.json"
+UA = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+IST = _dt.timezone(_dt.timedelta(hours=5, minutes=30))
+LAST_INDEX_NOTE = None
 FILING_TYPES = {
     "P": "Periodic Transaction Report", "O": "Annual report", "A": "Amendment",
     "C": "Candidate report", "X": "Extension", "T": "Termination report",
@@ -64,6 +46,10 @@ class PtrError(Exception):
 
 
 # ---------------------------------------------------------------- the index
+
+def nse_ticker(ticker):
+    ticker = str(ticker or "").strip().upper()
+    return ticker if not ticker or ticker.endswith(".NS") else ticker + ".NS"
 
 def iso(mdy):
     """'8/21/2026' or '08/21/2026' -> '2026-08-21' (two-digit years -> 20xx)."""
@@ -124,34 +110,137 @@ def parse_index(xml_bytes, year):
     return out
 
 
+def nse_date(value):
+    value = str(value or "").strip()
+    for fmt in ("%d-%b-%Y", "%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            return _dt.datetime.strptime(value, fmt).date().isoformat()
+        except ValueError:
+            continue
+    return None
+
+
+def parse_nse_snapshot(snapshot, year=None):
+    """NSE bulk/block-deal snapshot -> rows compatible with the index commands."""
+    if isinstance(snapshot, (bytes, str)):
+        try:
+            snapshot = json.loads(snapshot.decode("utf-8") if isinstance(snapshot, bytes) else snapshot)
+        except (ValueError, UnicodeDecodeError) as exc:
+            raise PtrError("NSE deal snapshot is not valid JSON: %s" % exc)
+    if not isinstance(snapshot, dict):
+        raise PtrError("NSE deal snapshot must be a JSON object")
+    if not any(key in snapshot for key in ("BULK_DEALS_DATA", "BLOCK_DEALS_DATA")):
+        raise PtrError("NSE deal snapshot has no bulk/block deal fields")
+    out = []
+    kinds = (("BULK_DEALS_DATA", "B", "Bulk deal"), ("BLOCK_DEALS_DATA", "K", "Block deal"))
+    for key, code, label in kinds:
+        deals = snapshot.get(key) or []
+        if not isinstance(deals, list):
+            raise PtrError("NSE field %s is not a list" % key)
+        for deal in deals:
+            if not isinstance(deal, dict):
+                continue
+            symbol = nse_ticker(deal.get("symbol"))
+            client = " ".join(str(deal.get("clientName") or "").split())
+            filed = nse_date(deal.get("date"))
+            if not symbol or not client or not filed or (year and int(filed[:4]) != year):
+                continue
+            side = str(deal.get("buySell") or "").strip().upper()
+            quantity = str(deal.get("qty") or "").replace(",", "").strip()
+            price = str(deal.get("watp") or "").replace(",", "").strip()
+            stable = "|".join((code, filed, symbol, client, side, quantity, price))
+            doc_id = hashlib.sha1(stable.encode("utf-8")).hexdigest()[:16]
+            row = {
+                "doc_id": doc_id, "type": code, "type_name": label,
+                "last": client, "first": "", "name": client, "district": symbol,
+                "year": int(filed[:4]), "filed": filed, "url": NSE_DEALS_PAGE,
+                "deal": {"symbol": symbol, "company": str(deal.get("name") or "").strip(),
+                         "client": client, "side": side, "quantity": quantity, "price": price,
+                         "remarks": deal.get("remarks"), "amount_inr": None},
+            }
+            try:
+                qty_value, price_value = float(quantity), float(price)
+                row["deal"]["amount_inr"] = round(qty_value * price_value, 2)
+            except ValueError:
+                pass
+            out.append(row)
+    out.sort(key=lambda r: (r["filed"], r["doc_id"]), reverse=True)
+    return out
+
+
+def _nse_download():
+    req = urllib.request.Request(NSE_DEALS_URL, headers={
+        "User-Agent": UA, "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9", "Referer": NSE_DEALS_PAGE,
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return resp.read()
+    except urllib.error.HTTPError as exc:
+        raise PtrError("NSE deal feed answered HTTP %s" % exc.code)
+    except urllib.error.URLError as exc:
+        raise PtrError("could not reach NSE deal feed: %s" % exc.reason)
+    except OSError as exc:
+        raise PtrError("could not read NSE deal feed: %s" % exc)
+
+
+def _write_nse_cache(snapshot, path=NSE_CACHE):
+    folder = os.path.dirname(path)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump({"saved_at": _dt.datetime.now(IST).isoformat(timespec="seconds"),
+                   "snapshot": snapshot}, fh, indent=2)
+        fh.write("\n")
+
+
 def load_index(year, offline=None):
+    global LAST_INDEX_NOTE
+    LAST_INDEX_NOTE = None
     if offline:
         with open(offline, "rb") as fh:
             data = fh.read()
-    else:
-        data = download(INDEX_URL % (year, "FD"))
-    return parse_index(read_index_bytes(data), year)
+        try:
+            snapshot = json.loads(data.decode("utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            raise PtrError("--offline expects a saved NSE JSON snapshot")
+        if isinstance(snapshot, dict) and "snapshot" in snapshot:
+            snapshot = snapshot["snapshot"]
+        return parse_nse_snapshot(snapshot, year)
+    try:
+        snapshot = json.loads(_nse_download().decode("utf-8"))
+        rows = parse_nse_snapshot(snapshot, year)
+        _write_nse_cache(snapshot)
+        return rows
+    except (PtrError, ValueError, UnicodeDecodeError) as exc:
+        if os.path.isfile(NSE_CACHE):
+            try:
+                with open(NSE_CACHE, encoding="utf-8") as fh:
+                    cached = json.load(fh)
+                snapshot = cached.get("snapshot", cached)
+                rows = parse_nse_snapshot(snapshot, year)
+            except (OSError, ValueError, PtrError) as cache_exc:
+                raise PtrError("NSE feed failed (%s), and cached snapshot is unusable (%s)"
+                               % (exc, cache_exc))
+            saved_at = cached.get("saved_at", "unknown time")
+            LAST_INDEX_NOTE = "NSE feed unavailable (%s); using cached snapshot saved %s." % (exc, saved_at)
+            return rows
+        raise PtrError("NSE feed unavailable (%s); no cached snapshot. Use --offline with a saved NSE JSON file."
+                       % exc)
 
 
 def member_match(row, member):
-    """'pelosi', 'Nancy Pelosi' or 'Pelosi, Nancy' against an index row."""
+    """Case-insensitive match against the NSE deal counterparty name or symbol."""
     member = (member or "").strip().lower()
     if not member:
         return True
-    if "," in member:
-        last, first = [x.strip() for x in member.split(",", 1)]
-    else:
-        parts = member.split()
-        last, first = parts[-1], " ".join(parts[:-1])
-    if row["last"].lower() != last:
-        return False
-    return not first or row["first"].lower().startswith(first)
+    return member in str(row.get("name", "")).lower() or member in str(row.get("district", "")).lower()
 
 
 def select(rows, members=None, kind="P", since=None):
     out = []
     for r in rows:
-        if kind and r["type"] != kind:
+        if kind and kind.upper() not in ("P", "ALL") and r["type"] not in kind.upper():
             continue
         if members and not any(member_match(r, m) for m in members):
             continue
@@ -348,14 +437,46 @@ def pdf_to_text(pdf_path):
 # ---------------------------------------------------------------- output
 
 def watchlist(args):
-    tickers = {t.upper() for t in (args.tickers or [])}
+    tickers = {nse_ticker(t) for t in (args.tickers or [])}
     path = getattr(args, "portfolio", None)
     if path and os.path.isfile(path):
         with open(path, encoding="utf-8") as fh:
             for p in json.load(fh).get("positions", []):
                 if p.get("ticker"):
-                    tickers.add(p["ticker"].upper())
+                    tickers.add(nse_ticker(p["ticker"]))
     return tickers
+
+
+def nse_report(row):
+    deal = row["deal"]
+    amount = deal.get("amount_inr")
+    amount_text = "₹{:,.2f}".format(amount) if amount is not None else "not reported"
+    side = deal.get("side") or "unknown side"
+    detail = "%s shares at ₹%s" % (deal.get("quantity") or "unknown quantity",
+                                    deal.get("price") or "unknown price")
+    if deal.get("remarks"):
+        detail += "; " + str(deal["remarks"])
+    transaction = {
+        "owner": "", "owner_name": deal["client"], "asset": deal.get("company") or deal["symbol"],
+        "ticker": deal["symbol"], "asset_type": "EQ", "type": side,
+        "type_name": "%s %s" % (row["type_name"], side.lower()),
+        "date": row["filed"], "notified": row["filed"], "amount": amount_text,
+        "amount_low": amount, "amount_high": amount, "status": None,
+        "description": detail, "account": None, "days_to_disclose": 0, "late": False,
+    }
+    return {"source": "NSE", "name": deal["client"], "status": transaction["type_name"],
+            "district": deal["symbol"], "doc_id": row["doc_id"], "filed": row["filed"],
+            "url": row["url"], "rows": [transaction]}
+
+
+def nse_snapshot_report(rows, filed=None):
+    transactions = []
+    for row in rows:
+        transactions.extend(nse_report(row)["rows"])
+    date = filed or max((r["filed"] for r in rows), default=None)
+    return {"source": "NSE", "name": "NSE bulk/block deals", "status": "deal snapshot",
+            "district": "NSE", "doc_id": "snapshot", "filed": date,
+            "url": NSE_DEALS_PAGE, "rows": transactions}
 
 
 def describe(row):
@@ -365,7 +486,7 @@ def describe(row):
         what += " (%s)" % row["ticker"]
     if row.get("option"):
         o = row["option"]
-        what += ": %s%d %s options, $%g strike, expires %s" % (
+        what += ": %s%d %s options, ₹%g strike, expires %s" % (
             "exercised " if o.get("exercised") else "", o["contracts"], o["kind"],
             o["strike"], o["expires"])
     elif row.get("shares"):
@@ -383,26 +504,40 @@ def describe(row):
 
 
 def render_report(report, watch=()):
-    out = ["%s (%s), %s. PTR %s, filed %s." % (
+    is_nse = report.get("source") == "NSE"
+    out = (["%s (%s), %s. NSE deal %s, disclosed %s." % (
         report.get("name") or "?", report.get("district") or "?", report.get("status") or "?",
-        report.get("doc_id") or "?", report.get("filed") or "?")]
+        report.get("doc_id") or "?", report.get("filed") or "?")] if is_nse else
+           ["%s (%s), %s. PTR %s, filed %s." % (
+               report.get("name") or "?", report.get("district") or "?", report.get("status") or "?",
+               report.get("doc_id") or "?", report.get("filed") or "?")])
+    if report.get("url"):
+        out.append("  Source: " + report["url"])
     for r in report["rows"]:
         flag = "  <- %s is on your list" % r["ticker"] if r.get("ticker") in watch else ""
         out.append("  - %s%s" % (describe(r), flag))
         if r.get("description") and not r.get("option") and not r.get("shares"):
             out.append("      %s" % r["description"])
     if not report["rows"]:
-        out.append("  no transaction rows found: read the PDF directly")
-    out.append("Public disclosure under the STOCK Act, filed up to 45 days after the trade. "
-               "Amounts are ranges. Not inside information.")
+        out.append("  no NSE deal rows found in this snapshot" if is_nse else
+                   "  no transaction rows found: read the PDF directly")
+    if is_nse:
+        out.append("NSE bulk/block-deal disclosure, not a promoter-insider filing or a recommendation. "
+                   "Reported deals can be stale and do not establish current holdings or intent.")
+    else:
+        out.append("Public disclosure under the STOCK Act, filed up to 45 days after the trade. "
+                   "Amounts are ranges. Not inside information.")
     return "\n".join(out) + "\n"
 
 
 def render_index(rows):
     out = []
     for r in rows:
-        out.append("%s  %-28s %-5s %-4s doc %-9s %s" % (
-            r["filed"], r["name"][:28], r["district"], r["type"], r["doc_id"], r["url"]))
+        deal = r.get("deal") or {}
+        detail = "%s %s shares @ ₹%s" % (deal.get("side") or "?", deal.get("quantity") or "?",
+                                          deal.get("price") or "?")
+        out.append("%s  %-24s %-12s %-5s %-16s %s  %s" % (
+            r["filed"], r["name"][:24], r["district"], r["type"], r["doc_id"], detail, r["url"]))
     return "\n".join(out) + ("\n" if out else "")
 
 
@@ -411,33 +546,32 @@ def render_index(rows):
 def _parser():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = ap.add_subparsers(dest="cmd")
-    year = _dt.date.today().year
+    year = _dt.datetime.now(IST).year
 
     def common(p):
         p.add_argument("--year", type=int, default=year)
         p.add_argument("--member", action="append",
-                       help="last name or 'First Last'; repeat for more members")
-        p.add_argument("--type", default="P", help="FilingType (default P = PTR; '' for all)")
-        p.add_argument("--since", help="only filings on or after YYYY-MM-DD")
-        p.add_argument("--offline", metavar="FILE", help="a saved <YEAR>FD.zip or .xml")
+                       help="counterparty name or NSE ticker; repeat to match more")
+        p.add_argument("--type", default="BK", help="B=bulk, K=block, BK=both (default)")
+        p.add_argument("--since", help="only deal dates on or after YYYY-MM-DD")
+        p.add_argument("--offline", metavar="FILE", help="saved NSE JSON snapshot")
         p.add_argument("--json", action="store_true")
 
-    p = sub.add_parser("index", help="list filings from the yearly index")
+    p = sub.add_parser("index", help="list NSE bulk and block deals")
     common(p)
     p.add_argument("--limit", type=int, default=50)
 
-    p = sub.add_parser("new", help="filings not seen at the last check")
+    p = sub.add_parser("new", help="deals not seen at the last check")
     common(p)
     p.add_argument("--state", default="trader/state/pelosi.json")
     p.add_argument("--today", help="YYYY-MM-DD, for reproducible runs")
     p.add_argument("--dry-run", action="store_true", help="do not update the state file")
-    p.add_argument("--read", action="store_true",
-                   help="also download and read each new PTR (needs pdftotext)")
+    p.add_argument("--read", action="store_true", help="include full deal details from the snapshot")
     p.add_argument("--pdf-dir", default="trader/state/ptr-pdfs")
     p.add_argument("--tickers", nargs="*", help="flag trades in these tickers")
     p.add_argument("--portfolio", default="trader/portfolio.json")
 
-    p = sub.add_parser("fetch", help="download one PTR PDF and read it")
+    p = sub.add_parser("fetch", help="show one deal by its snapshot ID")
     p.add_argument("doc_id")
     p.add_argument("--year", type=int, default=year)
     p.add_argument("--filed", help="filing date YYYY-MM-DD if known")
@@ -446,7 +580,7 @@ def _parser():
     p.add_argument("--portfolio", default="trader/portfolio.json")
     p.add_argument("--json", action="store_true")
 
-    p = sub.add_parser("parse", help="rows from pdftotext -layout text of a PTR")
+    p = sub.add_parser("parse", help="parse an NSE JSON snapshot or legacy PTR text")
     p.add_argument("text_file")
     p.add_argument("--filed", help="filing date YYYY-MM-DD (else read from the signature)")
     p.add_argument("--tickers", nargs="*")
@@ -488,7 +622,17 @@ def main(argv=None):
 def _run(args):
     if args.cmd == "parse":
         with open(args.text_file, encoding="utf-8", errors="replace") as fh:
-            report = parse_ptr_text(fh.read(), filed=args.filed)
+            text = fh.read()
+        try:
+            doc = json.loads(text)
+        except ValueError:
+            doc = None
+        if isinstance(doc, dict) and "snapshot" in doc:
+            doc = doc["snapshot"]
+        if isinstance(doc, dict) and ("BULK_DEALS_DATA" in doc or "BLOCK_DEALS_DATA" in doc):
+            report = nse_snapshot_report(parse_nse_snapshot(doc), args.filed)
+        else:
+            report = parse_ptr_text(text, filed=args.filed)
         if args.json:
             print(json.dumps(report, indent=2))
         else:
@@ -496,11 +640,13 @@ def _run(args):
         return 0 if report["rows"] else 1
 
     if args.cmd == "fetch":
-        path, report = _fetch_and_read(args.doc_id, args.year, args.pdf_dir, args.filed)
-        if report is None:
-            print("Saved %s. pdftotext is not installed, so read the PDF directly "
-                  "(Claude can open it), or install poppler (brew install poppler)." % path)
-            return 0
+        rows = load_index(args.year)
+        row = next((r for r in rows if r["doc_id"] == args.doc_id), None)
+        if LAST_INDEX_NOTE:
+            print("note: " + LAST_INDEX_NOTE, file=sys.stderr)
+        if row is None:
+            raise PtrError("deal %s is not in the latest NSE snapshot or cache" % args.doc_id)
+        report = nse_report(row)
         if args.json:
             print(json.dumps(report, indent=2))
         else:
@@ -508,13 +654,8 @@ def _run(args):
         return 0 if report["rows"] else 1
 
     rows = load_index(args.year, args.offline)
-    if args.cmd == "new" and not args.offline:
-        today = _dt.date.fromisoformat(args.today) if args.today else _dt.date.today()
-        if today.month == 1 and args.year == today.year:
-            try:
-                rows += load_index(args.year - 1)
-            except PtrError:
-                pass
+    if LAST_INDEX_NOTE:
+        print("note: " + LAST_INDEX_NOTE, file=sys.stderr)
     picked = select(rows, args.member, args.type or None, args.since)
 
     if args.cmd == "index":
@@ -524,40 +665,34 @@ def _run(args):
         else:
             sys.stdout.write(render_index(picked))
             if not picked:
-                print("No matching filings in the %d index." % args.year)
+                print("No matching NSE deals for %d." % args.year)
         return 0 if picked else 1
 
     # new
-    today = _dt.date.fromisoformat(args.today) if args.today else _dt.date.today()
+    today = _dt.date.fromisoformat(args.today) if args.today else _dt.datetime.now(IST).date()
     state = load_state(args.state)
     fresh = new_since(picked, state, today)
     watch = watchlist(args)
     reports = []
     if args.read:
         for r in fresh:
-            if r["type"] != "P":
-                continue
-            path, report = _fetch_and_read(r["doc_id"], r["year"], args.pdf_dir, r["filed"])
-            reports.append({"filing": r, "pdf": path, "report": report})
+            reports.append({"filing": r, "pdf": None, "report": nse_report(r)})
     if args.json:
         print(json.dumps({"new": fresh, "reports": reports}, indent=2))
     else:
         if not fresh:
             print("Nothing new since %s." % (state.get("last_check") or "the last check"))
         for r in fresh:
-            print("NEW %s: %s (%s) filed %s, doc %s" % (
+            print("NEW %s: %s (%s) disclosed %s, deal %s" % (
                 r["type_name"], r["name"], r["district"], r["filed"], r["doc_id"]))
             print("    %s" % r["url"])
         for rep in reports:
-            if rep["report"] is None:
-                print("    read %s (pdftotext not installed)" % rep["pdf"])
-            else:
-                sys.stdout.write(render_report(rep["report"], watch))
+            sys.stdout.write(render_report(rep["report"], watch))
     if not args.dry_run:
         seen = set(state.get("seen", []))
         seen.update(r["doc_id"] for r in picked)
         state["seen"] = sorted(seen)
-        state["last_check"] = _dt.datetime.now().replace(microsecond=0).isoformat()
+        state["last_check"] = _dt.datetime.now(IST).replace(microsecond=0).isoformat()
         save_state(args.state, state)
     return 0 if fresh else 1
 

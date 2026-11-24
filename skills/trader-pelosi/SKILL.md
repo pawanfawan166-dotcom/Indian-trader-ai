@@ -1,33 +1,23 @@
 ---
 name: trader-pelosi
 description: >-
-  The Pelosi Tracker. Watches the stock trades members of Congress must
-  disclose under the STOCK Act: reads the House Clerk's public Periodic
-  Transaction Reports (PTRs) as soon as they are posted, alerts once per new
-  filing, and turns each PDF into clean rows (who, owner, stock, ticker,
-  buy or sell, options strike and expiry, trade date, amount range, how many
-  days it took to disclose). Flags trades in stocks you hold. Senate reports
-  are covered by a documented manual route. Use when the user says "what is
-  Pelosi buying", "track Nancy Pelosi", "Congress trades", "politician stock
-  trades", "did any congressman buy X", "alert me when Pelosi files", or
-  "run the Pelosi skill".
-argument-hint: "[member name] [--read]"
+  NSE Deal Tracker. Reads the latest NSE bulk and block deal snapshot,
+  flags counterparties or `.NS` symbols on your list, and alerts once per
+  deal. Keeps the original index/new/fetch/parse commands and flags. NSE
+  provides a current snapshot, not an equivalent historical 13F/PTR archive.
+  Use when the user asks about Indian-market bulk or block deals.
+argument-hint: "[counterparty or NSE ticker] [--read]"
 ---
 
 # trader-pelosi
 
-Members of Congress have to report their trades, their spouse's and their
-dependent children's. The House Clerk posts every report as a PDF and lists
-them all in one index file per year. This skill reads that index, notices the
-moment a new report appears, and reads the report for you.
+This skill's original `index`, `new`, `fetch`, and `parse` commands remain
+available, but the live source is now NSE's latest official bulk/block deal
+snapshot. It is not an insider-intent signal: a bulk/block deal may be
+historical, and the snapshot does not establish a participant's current
+position or future plans.
 
-It is fast. It is not early. A PTR is due within 30 days of the member
-learning of the trade and never more than 45 days after it, so by the time
-anyone can read it the trade is days or weeks old. There is no inside
-information here: only public filings, read quickly. Say that every time.
-
-Tool in this folder (standard library Python; `pdftotext` from poppler is
-optional, to read the PDFs locally):
+Tool in this folder (standard library Python):
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/ptr.py" --help
@@ -35,111 +25,81 @@ python3 "${CLAUDE_SKILL_DIR}/ptr.py" --help
 
 ## What it reads and writes
 
-- Reads `https://disclosures-clerk.house.gov/public_disc/financial-pdfs/<YEAR>FD.zip`
-  (one `<Member>` per filing: name, district, FilingType, FilingDate, DocID)
-  and each PTR at `.../public_disc/ptr-pdfs/<YEAR>/<DocID>.pdf`.
-- Writes `trader/state/pelosi.json` (the DocIDs already shown, so each PTR
-  alerts once) and keeps downloaded PDFs in `trader/state/ptr-pdfs/`.
-- Reads `trader/portfolio.json` (if it exists) to flag trades in what you hold.
+- Reads `https://www.nseindia.com/api/snapshot-capital-market-largedeal?index=all`
+  (bulk and block deals, quantity, counterparty, side and weighted average price).
+- Writes `trader/state/pelosi.json` (deal IDs already shown) and caches the
+  latest successful response in `trader/state/nse-deals-cache.json`.
+- Reads `trader/portfolio.json` (if it exists) to flag NSE symbols you hold.
+- `--offline FILE` accepts a saved NSE JSON snapshot (or the cache wrapper).
+  `--year` filters deal dates; it does not select an NSE historical archive.
 
 ## The rules
 
-- **Quote the filing, not a tracker.** Every row comes from the PTR PDF on the
-  Clerk's site, with its DocID and link. Third-party trackers are fine for
-  browsing but can be off (Capitol Trades showed Pelosi's trade dates one day
-  earlier than her PTRs). The PTR wins.
-- **Amounts are ranges.** "$1,000,001 - $5,000,000", never "$3 million".
-- **Owner matters.** SP is the spouse, JT joint, DC a dependent child, blank
-  the member. Pelosi's 2026 trades are all SP: Paul Pelosi.
-- **Say the delay.** Each row shows how many days passed between the trade
-  and the filing; over 45 is flagged as late.
-- **Options are options.** A call bought with a strike and an expiry is not
-  a share purchase. The tool reads contracts, strike and expiry from the
-  description and marks exercises.
+- **Quote NSE.** Each row links to NSE's deal page. This snapshot covers
+  reported bulk/block deals only; it is not promoter/insider filing coverage.
+- **Amounts are INR.** Values are quantity × the reported weighted average
+  price (WATP), not guaranteed execution prices.
+- **Say the limitation.** The API is a latest snapshot, not a guaranteed
+  complete historical archive. A cache fallback may be stale; its save time
+  is reported. Without a usable cache, the command fails clearly and supports
+  `--offline FILE`.
 
-## Step 1: what has been filed
+## Step 1: latest NSE deals
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/ptr.py" index --member pelosi
-python3 "${CLAUDE_SKILL_DIR}/ptr.py" index --since 2026-10-01        # every member
-python3 "${CLAUDE_SKILL_DIR}/ptr.py" index --member "Josh Gottheimer" --year 2025
+python3 "${CLAUDE_SKILL_DIR}/ptr.py" index
+python3 "${CLAUDE_SKILL_DIR}/ptr.py" index --member RELIANCE
+python3 "${CLAUDE_SKILL_DIR}/ptr.py" index --since 2026-10-01 --type BK
 ```
 
-`--member` takes a last name, "First Last" or "Last, First", and repeats.
-`--type ''` lists every filing type (annual reports are type O).
+`--member` filters the counterparty or NSE symbol and may be repeated.
+`--type B` selects bulk deals, `--type K` block deals, and `BK` (the default)
+selects both. `--year` filters deal dates; it does not fetch historical
+archive data.
 
 ## Step 2: watch for new ones
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/ptr.py" new --member pelosi --read
+python3 "${CLAUDE_SKILL_DIR}/ptr.py" new --member RELIANCE --read
 ```
 
-Shows only PTRs not seen at the last check (the first run shows the last 45
-days), downloads and reads them with `--read`, and records them in the state
-file. Exit code 1 means nothing new. In January it also checks last year's
-index. The Clerk rebuilds the index file about once a day (the copy read on
-2026-10-13 was stamped 09:00 that morning), so checking every hour on weekdays
-is plenty: run it with `/loop 1h` or a scheduled task.
+Shows deals not seen at the last check (on its first run, it shows those
+within the last 45 days), includes their details with `--read`, and records
+their IDs. Exit code 1 means nothing new. The source is a latest NSE snapshot,
+not a year-by-year archive. If NSE blocks the request, a saved snapshot is
+used with a note containing its save time; if no usable cache exists, the
+command fails and suggests `--offline FILE`.
 
 ## Step 3: read a report
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/ptr.py" fetch 20035143
-python3 "${CLAUDE_SKILL_DIR}/ptr.py" parse ptr.txt --filed 2026-08-21 --json
+python3 "${CLAUDE_SKILL_DIR}/ptr.py" fetch DEAL_ID
+python3 "${CLAUDE_SKILL_DIR}/ptr.py" parse nse-deals.json --json
 ```
 
-`fetch` saves the PDF and, if `pdftotext` is installed, prints the rows. If it
-is not installed, open the saved PDF and read it directly: you can read PDFs.
-`parse` turns `pdftotext -layout` text into rows. Check the row count against
-the PDF when a report runs over several pages.
+`fetch` looks up one deal ID in the latest or cached snapshot. `parse` turns
+a saved NSE response into the existing report-shaped output. The original
+`--filed` and `--pdf-dir` flags remain accepted for CLI compatibility; they
+do not apply to the live NSE feed.
 
-## Example: a real alert
+## Example: report shape
 
 ```
-NEW Periodic Transaction Report: Hon. Nancy Pelosi (CA11) filed 2026-08-21, doc 20035143
-  - spouse purchase, Bloom Energy Corporation Class A Common Stock (BE): 100 call
-    options, $100 strike, expires 2027-06-17, $1,000,001 - $5,000,000, traded
-    2026-07-24, disclosed 28 days later
+NSE bulk deal (RELIANCE.NS), BUY. NSE deal DEAL_ID, disclosed YYYY-MM-DD.
+  - NSE Bulk deal buy, Example Client, Reliance Industries (RELIANCE.NS):
+    100 shares at ₹1,450, ₹145,000, traded YYYY-MM-DD
 ```
 
-The same PTR also shows 10,000 and 5,000 BE shares, a second block of 100 BE
-calls on 07/28, Intel shares and 50 Intel calls ($50 strike, 6/17/27), and a
-private real estate LLC with no ticker. Her other 2026 PTRs: 20033725
-(01/23), 20034836 (06/23, Intel and Uber calls) and 20035553 (10/02, a real
-estate LLC). Then: "This is a public disclosure filed 28 days after the trade.
-It says what Paul Pelosi bought in July, not what anyone will buy next."
-
-If the user wants to act on it, it goes the long way: a disclosure is weeks
-old, so it is a reason to look at a chart, not a setup. `/trader-scanner`
-and `/trader-entry` decide if there is a trade today; then shares only (the
-config has `allow_options: false`), sized by `/trader-budget`, checked by
-`/trader-risk`, placed by `/trader-broker` only after their yes.
-
-## The Senate: the manual route
-
-Senate reports live at `https://efdsearch.senate.gov`. Before searching, the
-site asks you to tick a box agreeing to the legal limits on how the reports
-may be used. That is an agreement for the person to accept, so this skill
-does not click it or automate it. The route:
-
-1. The user opens `https://efdsearch.senate.gov/search/` in their browser and
-   accepts the agreement themselves.
-2. They pick the report type "Periodic Transactions", type the senator's last
-   name, set the date range and search.
-3. They open the report: electronic filings show a table of transactions,
-   paper filings are scanned images.
-4. They paste the table (or a screenshot, or the saved page) into the chat,
-   and you write it up in the same shape as the House rows, with the report
-   link, and the same 45-day caveat.
+The values are examples of the output fields, not a real deal or current
+quote. Amounts are computed from the reported quantity and weighted average
+price; neither is a promise of an execution price.
 
 ## What it never does
 
-- Never says or implies a member has inside information, or that copying a
-  politician beats the market. No return claims.
-- Never presents a range as an exact dollar figure or a tracker's date as the
-  trade date.
-- Never places an order, and never copies options trades.
-- Never automates the Senate agreement or any login.
+- Never implies the data proves promoter/insider intent, current holdings,
+  or a profitable trade.
+- Never presents an NSE bulk/block deal as a live quote or recommendation.
+- Never places an order.
 
 ## Safety
 
@@ -153,6 +113,5 @@ does not click it or automate it. The route:
   Deny" card appears too. Never "Always allow" an order tool.
 - No options, margin, shorting or leverage unless the config allows it and
   the user confirms.
-- Congressional trades are PUBLIC disclosures filed up to 45 days after the
-  trade (STOCK Act). This skill reads them fast; it has no inside
-  information, and it says so.
+- NSE's current snapshot is not a full historical disclosure archive. It may
+  be unavailable or stale; report the actual source and fallback status.

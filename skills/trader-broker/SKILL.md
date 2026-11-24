@@ -1,10 +1,11 @@
 ---
 name: trader-broker
 description: >-
-  Order Executor. Sends approved orders to your broker, paper trading by
-  default, never without your yes. Shows each order as a plain ticket (a
+  Order Ticket. Preserves paper approvals and fill logging for NSE equities
+  in INR; NSE tickets are proposals and are not submitted by this skill.
+  Shows each order as a plain ticket (a
   bracket shows its stop-loss, take-profit and the max loss at the stop)
-  plus the exact JSON for Alpaca's place_stock_order, records your yes word
+  plus the compatible order-ticket JSON, records your yes word
   for word, then Claude's own Allow once / Deny card asks again. Builds the
   sell ticket that closes a day trade by your flat-by time, records fills,
   and logs each trade's max loss so trader-risk can hold the daily limit.
@@ -35,15 +36,23 @@ Two yeses from the user, one PASS from the rules. No yes, no order.
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/ticket.py" show                     # every ticket, READY or not
 python3 "${CLAUDE_SKILL_DIR}/ticket.py" approve --index 1 --reply "yes"
-python3 "${CLAUDE_SKILL_DIR}/ticket.py" result --index 1 --status placed --broker-id ID --filled-qty 8 --filled-price 364.20
-python3 "${CLAUDE_SKILL_DIR}/ticket.py" fill --symbol TSLA --side sell --qty 8 --price 370.04
-python3 "${CLAUDE_SKILL_DIR}/ticket.py" flatten --symbol TSLA --qty 8
+python3 "${CLAUDE_SKILL_DIR}/ticket.py" result --index 1 --status placed --broker-id ID --filled-qty 8 --filled-price 1464.20
+python3 "${CLAUDE_SKILL_DIR}/ticket.py" fill --symbol RELIANCE --side sell --qty 8 --price 1470.04
+python3 "${CLAUDE_SKILL_DIR}/ticket.py" flatten --symbol RELIANCE --qty 8
 python3 "${CLAUDE_SKILL_DIR}/ticket.py" log
 ```
 
-`ticket.py` never talks to a broker. It renders tickets, checks that a reply
+Bare symbols default to NSE (`RELIANCE` becomes `RELIANCE.NS`); money and
+fills are INR (₹). Dates and timestamps use IST (UTC+05:30), with NSE hours
+9:15-15:30. `ticket.py` never talks to a broker. It renders tickets, checks that a reply
 is a real yes for that order, builds the flatten ticket, and keeps the log in
-`trader/state/broker.json`. `--now "2026-10-19 10:15"` pins the clock (New York time).
+`trader/state/broker.json`. `--now "2026-10-19 10:15"` pins the clock (IST).
+
+**NSE tickets are paper proposals only.** This script preserves the original
+paper-ticket and approval workflow, but does not submit `.NS` symbols.
+Alpaca's `place_stock_order` interface is not an NSE routing integration.
+Do not pass an NSE ticket to Alpaca; use an Indian-market broker integration
+that explicitly supports NSE if you need to place an order.
 
 ## What it reads and writes
 
@@ -55,11 +64,12 @@ is a real yes for that order, builds the flatten ticket, and keeps the log in
 | `trader/portfolio.json` | cash and shares, updated by `fill` and by `result --filled-qty` |
 | `trader/plan.json` | the flat-by time for `flatten` |
 
-## Setup A: Alpaca (official MCP server, Claude Desktop)
+## Setup A: Alpaca (U.S. paper trading only)
 
 Alpaca's own server is github.com/alpacahq/alpaca-mcp-server (MIT). It runs on
 the user's computer inside Claude Desktop. It is not in Claude's connector
-directory. It trades on a **paper** account unless told otherwise. Checked
+directory. It trades on a **paper** account unless told otherwise. It is not
+an NSE routing solution; use only with supported U.S. symbols. Checked
 against its source on 2026-10-20 (version 2.4.0).
 
 1. The user makes an Alpaca account and creates **paper trading** API keys in
@@ -145,8 +155,10 @@ that draft orders to Needs approval too.
    If it prints "Not recorded", the reply was not an explicit yes for this
    order (for example "sure", "yes to all", or a yes that names a different
    stock or amount). Ask again. Never turn a reply into a yes yourself.
-4. Only after "Recorded your yes", call `place_stock_order` with exactly the
-   JSON the ticket printed. Claude's card appears: Allow once or Deny.
+4. For supported U.S. symbols only, after "Recorded your yes", call
+   `place_stock_order` with exactly the JSON the ticket printed. Claude's
+   card appears: Allow once or Deny. For `.NS` symbols, this skill stops at
+   the paper proposal; do not call Alpaca with the NSE ticket.
 5. Record what happened: `ticket.py result --index N --status placed
    --broker-id <id> --filled-qty Q --filled-price P` (the fill from the
    response or `get_open_position`), or `--status denied`, or `--status failed`
@@ -158,38 +170,34 @@ that draft orders to Needs approval too.
 - trader-alerts watches the stop, the target and the flat-by time
   (`alerts.py add --from-plan`). The bracket's own orders do the stopping.
 - When the stop-loss or the take-profit fills, record it:
-  `ticket.py fill --symbol TSLA --side sell --qty 8 --price 358.32`.
-- By `flat_by` (15:55 New York), anything still open gets closed:
-  1. Ask Alpaca how many shares are held: `get_open_position` (read only).
-  2. `ticket.py flatten --symbol TSLA --qty 8` writes a market sell for those
+  `ticket.py fill --symbol RELIANCE --side sell --qty 8 --price 1420`.
+- By `flat_by` (15:25 IST), anything still open gets closed:
+  1. For a live NSE account, verify the holding with the user's NSE-capable broker.
+  2. `ticket.py flatten --symbol RELIANCE --qty 8` writes a paper sell ticket for those
      shares to `trader/orders.json`.
   3. `/trader-risk`. A sell that only closes what the user holds is never
      blocked by the daily limits or the entry window.
   4. `ticket.py show`, then the user's yes for that one order, as above.
-  5. The bracket's stop-loss and take-profit still hold those shares, so
-     Alpaca rejects a new sell until they are canceled: `get_orders` (status
-     open, nested true) shows them; `cancel_order_by_id` each one (Needs
-     approval). Then `place_stock_order` with the ticket, then `result`.
+  5. This tool does not submit `.NS` tickets or cancel NSE bracket legs.
 
 ## Example: the reel
 
 ```
-ORDER 1 of 1, PAPER account, Alpaca
-  BUY 8 TSLA, market, good for today
-  stop-loss 358.32
-  take-profit 370.04
-  max loss about $46.88 if the stop fills at 358.32 (it can fill worse in a fast market)
-  why: opening-range breakout on TSLA: 8 shares, bound by your $50 max loss per trade (8 x 5.86 = $46.88 at the stop)
+ORDER 1 of 1, PAPER account (INR), Alpaca
+  BUY 8 RELIANCE.NS, market, good for today
+  stop-loss 1458.32
+  take-profit 1470.04
+  max loss about ₹46.88 if the stop fills at 1458.32 (it can fill worse in a fast market)
+  why: opening-range breakout on RELIANCE.NS: 8 shares, bound by your ₹50 max loss per trade (8 x 5.86 = ₹46.88 at the stop)
   READY: trader-risk PASS, waiting for your yes
-  Claude will call place_stock_order with exactly:
-    {"symbol": "TSLA", "side": "buy", "qty": "8", "type": "market", "time_in_force": "day",
-     "order_class": "bracket", "take_profit_limit_price": "370.04", "stop_loss_stop_price": "358.32"}
+  NSE paper ticket only: this script does not submit orders
+  JSON template (not an executable NSE order):
+    {"symbol": "RELIANCE.NS", "side": "buy", "qty": "8", "type": "market", "time_in_force": "day",
+     "order_class": "bracket", "take_profit_limit_price": "1470.04", "stop_loss_stop_price": "1458.32"}
 ```
 
-The user replies "yes". Claude records it, calls `place_stock_order`, and the
-card reads "Claude wants to use Place stock order" with that JSON and two
-buttons: Allow once, Deny. Allow once sends it to the paper account. The
-`why` and the plan stay in the file; they are never sent.
+For `.NS` tickets, the user's yes is recorded but no broker call is made.
+The `why` and plan stay in the file; they are never sent.
 
 ## What it never does
 
