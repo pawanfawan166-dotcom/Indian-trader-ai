@@ -18,9 +18,12 @@ st.markdown("""
 [data-testid="stMetric"] {border: 1px solid rgba(128,128,128,.18); border-radius: 8px; padding: 10px;}
 [data-testid="stDataFrame"] {border: 1px solid rgba(128,128,128,.18); border-radius: 8px;}
 .stButton > button {width: 100%; border-radius: 6px; min-height: 42px;}
+.stTabs [data-baseweb="tab-list"] {gap: .25rem; flex-wrap: wrap;}
+.stTabs [data-baseweb="tab"] {white-space: normal;}
 @media (max-width: 640px) {
   .block-container {padding-left: .75rem; padding-right: .75rem;}
   h1 {font-size: 1.7rem !important;}
+    .stTabs [data-baseweb="tab"] {padding: .4rem .55rem; font-size: .85rem;}
 }
 </style>
 """, unsafe_allow_html=True)
@@ -70,6 +73,55 @@ def parse_json_output(text: str):
     return None
 
 
+def show_skill_output(code: int, stdout: str, stderr: str):
+    payload = parse_json_output(stdout)
+    if code not in (0, 1):
+        st.error(stderr or stdout or f"Skill exited with code {code}")
+        if stdout and stderr:
+            st.code(stdout)
+        return None
+    if payload is not None:
+        st.json(payload)
+    elif stdout:
+        st.code(stdout)
+    if stderr:
+        st.warning(stderr) if code else st.caption(stderr)
+    if code == 1 and not stdout and not stderr:
+        st.info("No matching results were returned.")
+    return payload
+
+
+def show_deals(rows):
+    if not rows:
+        st.info("No matching NSE deals in the available snapshot.")
+        return
+    table = []
+    for row in rows:
+        deal = row.get("deal") or {}
+        table.append({
+            "Date": row.get("filed"),
+            "Deal": row.get("type_name") or row.get("type"),
+            "Symbol": deal.get("symbol") or row.get("district"),
+            "Company": deal.get("company"),
+            "Counterparty": deal.get("client") or row.get("name"),
+            "Side": deal.get("side"),
+            "Shares": deal.get("quantity"),
+            "Price (₹)": deal.get("price"),
+            "Value (₹)": deal.get("amount_inr"),
+            "NSE page": row.get("url"),
+        })
+    st.dataframe(
+        pd.DataFrame(table),
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Price (₹)": st.column_config.NumberColumn(format="₹%.2f"),
+            "Value (₹)": st.column_config.NumberColumn(format="₹%.2f"),
+            "NSE page": st.column_config.LinkColumn(display_text="Open"),
+        },
+    )
+
+
 def load_watchlist():
     if not WATCHLIST.exists():
         return {}, pd.DataFrame()
@@ -102,7 +154,9 @@ def format_watchlist(frame: pd.DataFrame):
     return frame
 
 
-scanner_tab, analyzer_tab = st.tabs(["NSE Scanner", "Quick Stock Analyzer"])
+scanner_tab, analyzer_tab, analyst_tab, budget_broker_tab, alerts_deals_tab, timemachine_tab = st.tabs([
+    "NSE Scanner", "Quick Stock Analyzer", "Analyst", "Budget & Broker", "Alerts & Deals", "Time Machine",
+])
 
 with scanner_tab:
     col1, col2 = st.columns(2)
@@ -275,3 +329,340 @@ with analyzer_tab:
                                     st.markdown(f"- {title} — _{source}_")
                         else:
                             st.info("No recent items found.")
+
+with analyst_tab:
+    st.subheader("NSE Fundamentals & Filings")
+    st.caption("Official NSE financial filings in INR. This report is analysis, not a buy/sell recommendation.")
+    with st.form("analyst_form"):
+        analyst_col, quarters_col = st.columns([3, 1])
+        with analyst_col:
+            analyst_ticker_input = st.text_input("NSE ticker", value="RELIANCE", placeholder="RELIANCE or RELIANCE.NS")
+        with quarters_col:
+            analyst_quarters = st.number_input("Quarters", min_value=1, max_value=12, value=6, step=1)
+        include_quote = st.checkbox("Include read-only Angel One quote when configured")
+        analyst_submit = st.form_submit_button("Run NSE analyst", type="primary")
+
+    if analyst_submit:
+        ticker = nse_ticker(analyst_ticker_input)
+        if not ticker:
+            st.warning("Enter an NSE ticker.")
+        else:
+            args = [ticker, "--quarters", str(int(analyst_quarters)), "--json"]
+            if not include_quote:
+                args.append("--no-quote")
+            with st.spinner(f"Reading NSE filings for {ticker}..."):
+                code, stdout, stderr = run_skill("trader-analyst", "facts.py", args, timeout=240)
+            reports = parse_json_output(stdout)
+            if code not in (0, 1):
+                show_skill_output(code, stdout, stderr)
+            elif isinstance(reports, list):
+                if stderr:
+                    st.warning(stderr)
+                for report in reports:
+                    result = report.get("result") or {}
+                    title = "%s · %s" % (report.get("ticker", ticker), result.get("entity") or "NSE filing report")
+                    with st.expander(title, expanded=True):
+                        st.caption("%s · %s · %s" % (
+                            result.get("source", "NSE"), result.get("currency", "INR"), result.get("basis", "")))
+                        ttm = result.get("ttm") or {}
+                        if ttm:
+                            metric_cols = st.columns(3)
+                            for col, key, label in zip(
+                                    metric_cols, ("revenue", "net_income", "eps_diluted"),
+                                    ("TTM Revenue", "TTM Net Income", "TTM EPS")):
+                                value = ttm.get(key)
+                                shown = "—" if value is None else (
+                                    "₹%.2f" % value if key == "eps_diluted" else "₹{:,.0f}".format(value))
+                                col.metric(label, shown)
+                        rows = result.get("rows") or []
+                        if rows:
+                            st.dataframe(
+                                pd.DataFrame(rows),
+                                use_container_width=True,
+                                hide_index=True,
+                                column_config={
+                                    "revenue": st.column_config.NumberColumn(format="₹%.0f"),
+                                    "gross_profit": st.column_config.NumberColumn(format="₹%.0f"),
+                                    "operating_income": st.column_config.NumberColumn(format="₹%.0f"),
+                                    "net_income": st.column_config.NumberColumn(format="₹%.0f"),
+                                    "eps_diluted": st.column_config.NumberColumn(format="₹%.2f"),
+                                    "revenue_yoy": st.column_config.NumberColumn(format="%.1f%%"),
+                                    "net_income_yoy": st.column_config.NumberColumn(format="%.1f%%"),
+                                    "eps_yoy": st.column_config.NumberColumn(format="%.1f%%"),
+                                    "url": st.column_config.LinkColumn(display_text="Filing"),
+                                },
+                            )
+                        else:
+                            st.info("No quarterly rows were reported for this ticker.")
+                        if result.get("filing"):
+                            st.markdown("**Latest filing**")
+                            st.json(result["filing"])
+                        if result.get("quote_note"):
+                            st.caption(result["quote_note"])
+                        if result.get("warnings"):
+                            for warning in result["warnings"]:
+                                st.warning(warning)
+            else:
+                show_skill_output(code, stdout, stderr)
+
+with budget_broker_tab:
+    st.subheader("Position Sizing · INR")
+    plan_path = ROOT / "trader" / "plan.json"
+    config_path = ROOT / "trader" / "config.json"
+    try:
+        plan_doc = json.loads(plan_path.read_text(encoding="utf-8")) if plan_path.exists() else None
+    except (OSError, json.JSONDecodeError):
+        plan_doc = None
+    try:
+        budget_config = json.loads(config_path.read_text(encoding="utf-8")) if config_path.exists() else {}
+    except (OSError, json.JSONDecodeError):
+        budget_config = {}
+    if plan_doc:
+        st.caption("Plan: %s · entry ₹%s · stop ₹%s · target ₹%s" % (
+            plan_doc.get("symbol", "—"), plan_doc.get("entry", "—"),
+            plan_doc.get("stop", "—"), plan_doc.get("target", "—")))
+    else:
+        st.info("Create a trade plan in Quick Stock Analyzer before sizing a position.")
+    configured_budget = budget_config.get("budget")
+    try:
+        configured_budget = max(0.0, float(configured_budget or 0))
+    except (TypeError, ValueError):
+        configured_budget = 0.0
+    configured_loss = budget_config.get(
+        "max_loss_per_trade_inr", budget_config.get("max_loss_per_trade_usd", 50))
+    st.caption("Configured max loss per trade: ₹%s. Change rules in trader/config.json." % configured_loss)
+
+    with st.form("budget_form"):
+        budget_amount = st.number_input(
+            "Trade budget (₹)", min_value=0.0, value=configured_budget, step=1000.0, format="%.2f")
+        use_limit = st.checkbox("Use the plan entry as a limit price")
+        size_submit = st.form_submit_button("Size and save paper ticket", type="primary", disabled=not bool(plan_doc))
+
+    def run_risk_and_show_tickets():
+        st.markdown("#### Risk Check")
+        with st.spinner("Checking the proposed order against your rules..."):
+            risk_code, risk_stdout, risk_stderr = run_skill("trader-risk", "check.py", ["--json"])
+        show_skill_output(risk_code, risk_stdout, risk_stderr)
+        st.markdown("#### Broker Ticket")
+        with st.spinner("Rendering paper ticket..."):
+            broker_code, broker_stdout, broker_stderr = run_skill(
+                "trader-broker", "ticket.py", ["show", "--json"])
+        show_skill_output(broker_code, broker_stdout, broker_stderr)
+
+    if size_submit:
+        if budget_amount <= 0:
+            st.warning("Enter a budget greater than ₹0.")
+        else:
+            size_args = ["--budget", str(budget_amount), "--write", "--json"]
+            if use_limit:
+                size_args.append("--limit")
+            with st.spinner("Sizing whole shares against your INR limits..."):
+                size_code, size_stdout, size_stderr = run_skill("trader-budget", "size.py", size_args)
+            if size_code != 0:
+                show_skill_output(size_code, size_stdout, size_stderr)
+            else:
+                st.success("Proposed paper order saved to trader/orders.json.")
+                show_skill_output(size_code, size_stdout, size_stderr)
+                run_risk_and_show_tickets()
+
+    st.divider()
+    st.subheader("Broker Paper Tickets")
+    st.caption("NSE tickets are proposals only. This interface does not submit orders or record approval.")
+    ticket_col, log_col = st.columns(2)
+    with ticket_col:
+        refresh_tickets = st.button("Run Risk Check & Refresh Tickets", key="broker_refresh")
+    with log_col:
+        show_broker_log = st.button("Show Broker Log", key="broker_log")
+    if refresh_tickets:
+        if not (ROOT / "trader" / "orders.json").exists():
+            st.info("No trader/orders.json exists yet. Size a plan above first.")
+        else:
+            run_risk_and_show_tickets()
+    if show_broker_log:
+        with st.spinner("Loading today's paper-ticket log..."):
+            log_code, log_stdout, log_stderr = run_skill("trader-broker", "ticket.py", ["log"])
+        show_skill_output(log_code, log_stdout, log_stderr)
+
+with alerts_deals_tab:
+    st.subheader("Price Alerts")
+    st.caption("Quotes are delayed and unofficial. Alerts are informational; they never place or modify orders.")
+    clock_col, check_col, rules_col = st.columns(3)
+    with clock_col:
+        clock_clicked = st.button("NSE Clock", key="alerts_clock")
+    with check_col:
+        check_alerts = st.button("Check Alerts", key="alerts_check")
+    with rules_col:
+        list_alerts = st.button("List Rules", key="alerts_list")
+    if clock_clicked:
+        with st.spinner("Checking NSE session status..."):
+            code, stdout, stderr = run_skill("trader-alerts", "alerts.py", ["clock", "--json"])
+        show_skill_output(code, stdout, stderr)
+    if check_alerts:
+        with st.spinner("Checking today's alert rules and delayed quotes..."):
+            code, stdout, stderr = run_skill("trader-alerts", "alerts.py", ["check", "--json"], timeout=150)
+        show_skill_output(code, stdout, stderr)
+    if list_alerts:
+        code, stdout, stderr = run_skill("trader-alerts", "alerts.py", ["list"])
+        show_skill_output(code, stdout, stderr)
+
+    with st.form("alert_add_form"):
+        alert_type = st.selectbox("New alert", [
+            "Price above", "Price below", "Stop", "Target", "Percent move",
+            "Opening bell", "Time reminder", "From current plan",
+        ])
+        alert_symbol = ""
+        alert_value = None
+        alert_time = "15:25"
+        alert_label = ""
+        alert_direction = "Either"
+        if alert_type in ("Price above", "Price below", "Stop", "Target", "Percent move"):
+            alert_symbol = st.text_input("NSE ticker", placeholder="RELIANCE or RELIANCE.NS")
+            if alert_type == "Percent move":
+                alert_value = st.number_input("Move (%)", min_value=0.1, value=3.0, step=0.5)
+                alert_direction = st.selectbox("Direction", ["Either", "Up", "Down"])
+            else:
+                alert_value = st.number_input("Price (₹)", min_value=0.01, value=100.0, step=1.0)
+        elif alert_type == "Time reminder":
+            alert_time = st.text_input("IST time (HH:MM)", value="15:25")
+            alert_label = st.text_input("Reminder label", value="Flat by close")
+        alert_submit = st.form_submit_button("Add alert")
+
+    if alert_submit:
+        alert_args = ["add"]
+        if alert_type == "From current plan":
+            alert_args.append("--from-plan")
+        elif alert_type == "Opening bell":
+            alert_args.append("--opening-bell")
+        elif alert_type == "Time reminder":
+            alert_args += ["--at", alert_time, "--label", alert_label or "Time reminder"]
+        else:
+            ticker = nse_ticker(alert_symbol)
+            if not ticker:
+                st.warning("Enter an NSE ticker.")
+                alert_args = None
+            else:
+                flag = {
+                    "Price above": "--above", "Price below": "--below",
+                    "Stop": "--stop", "Target": "--target", "Percent move": "--pct",
+                }[alert_type]
+                alert_args += ["--symbol", ticker, flag, str(alert_value)]
+                if alert_type == "Percent move" and alert_direction != "Either":
+                    alert_args += ["--direction", alert_direction.lower()]
+        if alert_args:
+            with st.spinner("Saving alert rule..."):
+                code, stdout, stderr = run_skill("trader-alerts", "alerts.py", alert_args)
+            show_skill_output(code, stdout, stderr)
+
+    with st.form("quote_form"):
+        quote_symbol_input = st.text_input("Save a delayed quote to trader/prices.json", placeholder="RELIANCE")
+        quote_submit = st.form_submit_button("Fetch quote")
+    if quote_submit:
+        ticker = nse_ticker(quote_symbol_input)
+        if not ticker:
+            st.warning("Enter an NSE ticker.")
+        else:
+            with st.spinner(f"Fetching a delayed quote for {ticker}..."):
+                code, stdout, stderr = run_skill(
+                    "trader-alerts", "alerts.py", ["quote", ticker, "--json", "--write"], timeout=120)
+            show_skill_output(code, stdout, stderr)
+
+    st.divider()
+    st.subheader("NSE Bulk & Block Deals")
+    st.caption("Latest NSE snapshot only; it is not a complete historical archive or an insider-intent signal.")
+    with st.form("deals_form"):
+        deal_col, limit_col = st.columns([3, 1])
+        with deal_col:
+            deal_member = st.text_input("Counterparty or NSE ticker", placeholder="RELIANCE")
+        with limit_col:
+            deal_limit = st.number_input("Maximum rows", min_value=1, max_value=200, value=50, step=5)
+        deal_kind = st.selectbox("Deal type", ["Both", "Bulk", "Block"])
+        deal_since = st.text_input("On or after date (optional)", placeholder="YYYY-MM-DD")
+        deal_offline = st.text_input("Offline snapshot path (optional)", placeholder="trader/state/nse-deals-cache.json")
+        latest_deals = st.form_submit_button("Load latest deals", type="primary")
+        new_deals = st.form_submit_button("Check and record unseen deals")
+
+    if latest_deals or new_deals:
+        deal_type = {"Both": "BK", "Bulk": "B", "Block": "K"}[deal_kind]
+        if latest_deals:
+            deal_args = ["index", "--json", "--limit", str(int(deal_limit)), "--type", deal_type]
+        else:
+            deal_args = ["new", "--json", "--read", "--type", deal_type]
+        if deal_member.strip():
+            deal_args += ["--member", deal_member.strip()]
+            member_ticker = deal_member.strip().upper().removesuffix(".NS")
+            if member_ticker.replace("-", "").isalnum() and " " not in member_ticker:
+                deal_args += ["--tickers", nse_ticker(member_ticker)] if new_deals else []
+        if deal_since.strip():
+            deal_args += ["--since", deal_since.strip()]
+        if deal_offline.strip():
+            deal_args += ["--offline", deal_offline.strip()]
+        with st.spinner("Loading the NSE deal snapshot..."):
+            code, stdout, stderr = run_skill("trader-pelosi", "ptr.py", deal_args, timeout=150)
+        payload = parse_json_output(stdout)
+        if code not in (0, 1):
+            show_skill_output(code, stdout, stderr)
+        elif latest_deals:
+            if stderr:
+                st.warning(stderr)
+            show_deals(payload if isinstance(payload, list) else [])
+        elif isinstance(payload, dict):
+            if stderr:
+                st.warning(stderr)
+            show_deals(payload.get("new") or [])
+            for report in payload.get("reports") or []:
+                with st.expander("Deal details: %s" % (report.get("filing", {}).get("doc_id", "NSE"))):
+                    st.json(report.get("report") or report)
+            st.caption("This check records seen deal IDs in trader/state/pelosi.json.")
+        else:
+            show_skill_output(code, stdout, stderr)
+
+with timemachine_tab:
+    st.subheader("Historical NSE Replay")
+    st.caption("Replays a saved trader-exit plan against recent 5-minute history. Simulation is not a prediction.")
+    replay_plan_path = ROOT / "trader" / "plan.json"
+    try:
+        replay_plan = json.loads(replay_plan_path.read_text(encoding="utf-8")) if replay_plan_path.exists() else None
+    except (OSError, json.JSONDecodeError):
+        replay_plan = None
+    if replay_plan:
+        st.caption("Plan: %s · %s · entry ₹%s · stop ₹%s · target ₹%s" % (
+            replay_plan.get("symbol", "—"), replay_plan.get("date", "—"), replay_plan.get("entry", "—"),
+            replay_plan.get("stop", "—"), replay_plan.get("target", "—")))
+    else:
+        st.info("Create a plan in Quick Stock Analyzer before running the replay.")
+    with st.form("timemachine_form"):
+        replay_col, seed_col = st.columns([3, 1])
+        with replay_col:
+            replay_count = st.slider("Simulated sessions", min_value=1000, max_value=20000, value=10000, step=1000)
+        with seed_col:
+            replay_seed = st.number_input("Seed", min_value=0, value=19, step=1)
+        replay_until_enabled = st.checkbox("Use a flat-by time", value=bool(replay_plan and replay_plan.get("flat_by")))
+        replay_until = st.text_input("Flat-by (IST HH:MM)", value=(replay_plan or {}).get("flat_by", "15:25"))
+        replay_submit = st.form_submit_button("Run time machine", type="primary", disabled=not bool(replay_plan))
+    if replay_submit:
+        replay_args = ["run", "--json", "--write", "--replays", str(int(replay_count)), "--seed", str(int(replay_seed))]
+        if replay_until_enabled:
+            replay_args += ["--until", replay_until]
+        with st.spinner("Replaying the plan against recent NSE sessions..."):
+            code, stdout, stderr = run_skill("trader-timemachine", "timemachine.py", replay_args, timeout=300)
+        replay_result = parse_json_output(stdout)
+        if code != 0 or not isinstance(replay_result, dict):
+            show_skill_output(code, stdout, stderr)
+        else:
+            if stderr:
+                st.warning(stderr)
+            if replay_result.get("verdict"):
+                st.markdown("**" + str(replay_result["verdict"]) + "**")
+            for note in replay_result.get("verdict_notes") or []:
+                st.write(note)
+            st.json(replay_result)
+            st.caption("Saved to trader/timemachine.json. Results are historical simulations, not forecasts.")
+    if (ROOT / "trader" / "timemachine.json").exists():
+        if st.button("Render saved fan chart", key="timemachine_chart"):
+            with st.spinner("Rendering saved replay chart..."):
+                code, stdout, stderr = run_skill(
+                    "trader-timemachine", "timemachine.py", ["chart", "--from"], timeout=120)
+            if code == 0 and stdout:
+                st.code(stdout)
+            else:
+                show_skill_output(code, stdout, stderr)
