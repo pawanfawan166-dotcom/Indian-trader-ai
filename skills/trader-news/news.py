@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """News monitor for trader-news. Standard library only.
 
-Watches headlines and SEC filings for the stocks you watch or hold and
+Watches Indian-market headlines for the stocks you watch or hold and
 prints only what is new since the last check, newest first, with how far each
 stock has moved today and a flag on anything that touches your tickers.
 
@@ -18,7 +18,7 @@ positions in trader/portfolio.json.
 Sources, for each NSE ticker:
   - Yahoo Finance headline RSS with India settings, plus Google News India.
   - Yahoo Finance chart endpoint for the last price against yesterday's close.
-  - SEC EDGAR filings are retained only for explicitly suffixed .US tickers.
+  - News and chart lookups are restricted to NSE .NS tickers.
 
   - The move: Yahoo Finance's chart endpoint (unofficial, can lag), the last
     price against yesterday's close:
@@ -194,12 +194,12 @@ class Fetcher(object):
 
 def yahoo_symbol(ticker):
     ticker = nse_ticker(ticker)
-    return ticker[:-3] if ticker.endswith(".US") else ticker
+    return ticker
 
 
 def nse_ticker(ticker):
     ticker = str(ticker or "").strip().upper()
-    if ticker.endswith((".NS", ".US")):
+    if ticker.endswith(".NS"):
         return ticker
     return ticker + ".NS"
 
@@ -336,12 +336,10 @@ def collect_moves(fetcher, watch, errors=None):
 def mention_patterns(watch):
     pats = {}
     for t, name in watch.items():
-        base = t[:-3] if t.endswith(".NS") else t[:-3] if t.endswith(".US") else t
+        base = t[:-3] if t.endswith(".NS") else t
         alts = [r"\(%s\)" % re.escape(t), r"\b%s\b" % re.escape(base)]
         if t.endswith(".NS"):
             alts.append(r"\bNSE\s*:\s*%s\b" % re.escape(base))
-        elif t.endswith(".US"):
-            alts.append(r"\b(?:NYSE|NASDAQ|Nasdaq)\s*:\s*%s\b" % re.escape(base))
         if name and len(name) >= 4:
             alts.append(r"\b%s\b" % re.escape(name).replace(r"\ ", r"[\s-]"))
         pats[t] = re.compile("|".join(alts))
@@ -407,7 +405,7 @@ def collect(fetcher, watch, state, sec=True, forms=("8-K",), count=10, errors=No
                 items += parse_rss(fetcher.get(url, "google-%s.xml" % t), t, "Google News India")
             except NewsError as exc:
                 errors.append("Google News India for %s: %s" % (t, exc))
-    us_tickers = [t for t in sorted(watch) if t.endswith(".US")]
+    us_tickers = []
     if sec and us_tickers:
         try:
             ciks = cik_map(fetcher, state)
@@ -539,11 +537,7 @@ def main(argv=None):
     state = load_json(args.state) or {}
     errors = []
     ua = sec_user_agent(args.user_agent, args.config)
-    sec = not args.no_sec
-    if sec and any(t.endswith(".US") for t in watch) and not ua and not args.offline:
-        errors.append("SEC filings skipped: set sec_user_agent in trader/config.json or "
-                      "SEC_USER_AGENT (\"Your Name you@example.com\") to include them")
-        sec = False
+    sec = False
     fetcher = Fetcher(ua, offline=args.offline)
     forms = [f.strip().upper() for f in args.forms.split(",") if f.strip()]
     items = collect(fetcher, watch, state, sec=sec, forms=forms, errors=errors)

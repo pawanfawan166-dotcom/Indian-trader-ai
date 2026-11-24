@@ -3,7 +3,7 @@ name: trader-news
 description: >-
   News Monitor. Tracks breaking news on every stock you watch and flags what
   moves it: Yahoo Finance and Google News India headlines per NSE ticker,
-  optional SEC filings for explicitly marked `.US` tickers, and how
+  NSE/Indian headlines and how
   far each stock is from yesterday's close. Shows only what is new since the
   last check, newest first, in IST, tags each item (earnings,
   analyst, deal, halt, regulatory, macro...) and never repeats one. Use when
@@ -39,7 +39,7 @@ python3 "${CLAUDE_SKILL_DIR}/news.py" --no-sec --json
 | Yahoo Finance headline RSS | India settings, NSE symbol such as `RELIANCE.NS` |
 | Google News India RSS | Search results for each NSE symbol and Indian-market context |
 | Yahoo Finance chart endpoint | the last INR (₹) price against yesterday's close (unofficial, can lag) |
-| SEC EDGAR company Atom feed | used only for explicit `.US` symbols; needs `sec_user_agent` or `SEC_USER_AGENT` |
+| NSE company filings | Use the trader-analyst skill for official NSE filing facts; this skill tracks news feeds |
 | `trader/state/news.json` | what has been shown (kept 30 days) and each ticker's CIK |
 
 ## The rules
@@ -47,8 +47,7 @@ python3 "${CLAUDE_SKILL_DIR}/news.py" --no-sec --json
 - **Headlines are leads, not facts.** Before telling the user something
   happened, open the story or the filing and read it. Quote the source and
   link it. Never summarise a paywalled story you could not read: say so.
-- **Filings beat headlines.** If an 8-K and a headline disagree, the 8-K is
-  what a U.S. company told the SEC. NSE symbols do not get SEC lookups.
+- **Filings beat headlines.** For Indian stocks, use trader-analyst for official NSE filing facts. This news skill does not substitute filings for headline verification.
 - **Say what it touches.** Every item lists the tickers it touches and its
   tags: earnings, analyst, legal, deal, capital, people, risk, halt,
   regulatory, macro. Filings marked `!` carry an important 8-K item: earnings

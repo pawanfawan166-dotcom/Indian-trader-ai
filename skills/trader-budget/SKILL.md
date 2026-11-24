@@ -20,7 +20,7 @@ argument-hint: "[budget in INR]"
 
 Bare tickers default to NSE (`RELIANCE` becomes `RELIANCE.NS`). All money
 values and calculations are INR (₹); existing config/output keys ending in
-`_usd` or named `dollars` remain for compatibility but mean INR here.
+Use `_inr` keys for rupee limits. Legacy `_usd` keys remain read-only compatibility aliases and are interpreted as INR.
 The Budget Manager turns a plan ("buy RELIANCE at ₹1,464.18, stop ₹1,458.32") into an
 exact order ("buy 8 shares"), inside rules the user sets once. The stop
 decides the size: the further away the stop, the fewer shares. It writes a
@@ -58,10 +58,10 @@ If `trader/config.json` does not exist, copy `config.example.json` into
 
 - **budget**: how much money this is for. Only money they can afford to lose.
 - **cash_buffer_pct**: how much always stays in cash (default 10).
-- **max_loss_per_trade_usd**: legacy key; its value is rupees, the most one trade may lose if the stop fills (default ₹50).
-- **max_position_pct**, **max_order_usd**, **min_order_usd**: legacy `_usd` keys; values are INR, for the biggest position (75% of the
+- **max_loss_per_trade_inr**: the most one trade may lose if the stop fills (default ₹50).
+- **max_position_pct**, **max_order_inr**, **min_order_inr**: for the biggest position (75% of the
   budget), biggest order (₹4,000) and smallest order (₹5).
-- The day limits trader-risk enforces: **max_daily_loss_usd** (₹150; legacy key), **max_trades_per_day** (3),
+- The day limits trader-risk enforces: **max_daily_loss_inr** (₹150), **max_trades_per_day** (3),
   **min_reward_risk** (1.0), **require_stop** (true), **no_entries_before** / **no_entries_after**
   ("09:45" / "15:30") and **flat_by** ("15:25"), all IST.
 - **blocked**: tickers they never want to trade.
@@ -78,9 +78,9 @@ the smallest of four limits:
 
 | limit | shares |
 | --- | --- |
-| max loss | `max_loss_per_trade_usd` / risk a share (entry minus stop) |
+| max loss | `max_loss_per_trade_inr` / risk a share (entry minus stop) |
 | position cap | budget x `max_position_pct` / entry |
-| max order | `max_order_usd` / entry |
+| max order | `max_order_inr` / entry |
 | cash | (budget minus the cash buffer) / entry, never more than the cash in `trader/portfolio.json` |
 
 The entry it sizes at: the limit price with `--limit`. For a market order, the

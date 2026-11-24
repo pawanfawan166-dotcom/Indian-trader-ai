@@ -13,7 +13,7 @@
     python3 alerts.py check                          # rings what hit, once; exit 1 if nothing rang
     python3 alerts.py check --now "2026-10-19 15:25" --offline tests/fixtures/trader-alerts
     python3 alerts.py list
-    python3 alerts.py reset tsla-plan-stop
+    python3 alerts.py reset reliance-plan-stop
 
 Rule types:
   above / target  the price is at or above "price"
@@ -33,7 +33,7 @@ Quotes (free, delayed, unofficial; for alerts only, never for timing an order):
   yahoo   https://query2.finance.yahoo.com/v8/finance/chart/RELIANCE.NS (falls back to
           query1 on a 429 or a 5xx; one retry with a pause on a 429; one
           request per ticker, half a second apart; the default)
-  stooq   https://stooq.com/q/l/?s=tsla.us&f=sd2t2ohlcv&h&e=csv (Stooq's free
+  stooq   https://stooq.com/q/l/?s=reliance.in&f=sd2t2ohlcv&h&e=csv (legacy
           CSV; it answered 404 on 2026-10-13, kept for when it is back)
   --offline DIR reads DIR/<source>-<TICKER>.json|csv (or .json.gz) instead.
 
@@ -145,7 +145,8 @@ def market_status(now_utc):
 # ---------------------------------------------------------------- quotes
 
 def stooq_url(sym):
-    return "https://stooq.com/q/l/?s=%s.us&f=sd2t2ohlcv&h&e=csv" % sym.lower().replace(".", "-")
+    base = nse_symbol(sym)[:-3]
+    return "https://stooq.com/q/l/?s=%s.in&f=sd2t2ohlcv&h&e=csv" % base.lower().replace(".", "-")
 
 
 def yahoo_url(sym, host=YAHOO_HOSTS[0]):
