@@ -1,19 +1,24 @@
 {
   "created_by": "trader-entry",
-  "symbol": "TCS.NS",
+  "symbol": "SBIN.NS",
   "setup": "orb",
   "side": "buy",
   "currency": "INR",
-  "date": "2026-11-24",
-  "status": "no-data",
+  "date": "2026-11-23",
+  "status": "waiting",
   "time": null,
   "bar_start": null,
   "bar_index": null,
   "price": null,
-  "level": null,
+  "level": 1181.3,
   "interval": "5m",
-  "opening_range": null,
+  "opening_range": {
+    "high": 1181.3,
+    "low": 1153.0,
+    "minutes": 15
+  },
   "source": "yahoo",
-  "checked_at": "2026-11-24T09:10:31Z",
-  "reason": "Yahoo sent no bars for the opening range"
+  "checked_at": "2026-11-24T15:22:09Z",
+  "fallback_session": "2026-11-23",
+  "reason": "last close \u20b91130.45 (15:15 bar), \u20b950.85 under the range high \u20b91181.30 (-4.30%)"
 }

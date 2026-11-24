@@ -1,0 +1,29 @@
+{
+  "created_by": "trader-exit",
+  "symbol": "SBIN.NS",
+  "side": "buy",
+  "currency": "INR",
+  "date": "2026-11-24",
+  "setup": "orb",
+  "entry": 1181.3,
+  "entry_time": null,
+  "entry_bar": null,
+  "interval": "5m",
+  "opening_range": {
+    "high": 1181.3,
+    "low": 1153.0,
+    "minutes": 15
+  },
+  "stop": 1167.15,
+  "stop_rule": "or_mid",
+  "stop_label": "opening-range midpoint",
+  "target": 1209.6,
+  "target_r": 2.0,
+  "target_label": "2R (two times the risk)",
+  "risk_per_share": 14.15,
+  "reward_risk": 2.0,
+  "flat_by": "15:25",
+  "stop_detail": "(\u20b91,181.30 + \u20b91,153.00) / 2 = \u20b91167.15",
+  "created_at": "2026-11-24T15:22:10Z",
+  "note": "A stop is a plan, not a guarantee: a gap or a fast market can fill past it."
+}

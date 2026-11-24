@@ -39,6 +39,11 @@ User-Agent. Tickers passed to this skill should use the `.NS` suffix.
   filing when available; derived quarters and approximate EPS are marked.
 - Gross and operating margins are left blank when NSE filings do not report
   comparable concepts. The tool does not infer them from unrelated line items.
+- In the Streamlit dashboard, the Analyst tab falls back to Yahoo Finance
+  quarterly revenue and net profit plus market cap, trailing P/E and ROE when
+  NSE XBRL has no latest-quarter revenue/net-income pair. Those estimates are
+  unofficial, shown in INR crore, and are separate from this CLI's filing
+  output.
 - An Angel One SmartAPI LTP quote is included when credentials are configured.
   Quotes are read-only and expressed in INR. Without credentials, the report
   explicitly notes that no quote was fetched. Use `--no-quote` to skip it.

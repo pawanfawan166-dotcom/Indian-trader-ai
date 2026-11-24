@@ -19,7 +19,8 @@ st.set_page_config(page_title="Indian NSE Trading Desk", page_icon="₹", layout
 st.markdown("""
 <style>
 .block-container {padding-top: 1.5rem; padding-bottom: 2rem; max-width: 1180px;}
-[data-testid="stMetric"] {border: 1px solid rgba(128,128,128,.18); border-radius: 8px; padding: 10px;}
+[data-testid="stMetric"] {border: 1px solid rgba(128,128,128,.18); border-radius: 8px; padding: 10px; min-width: 0;}
+[data-testid="stMetricValue"] {font-size: clamp(.9rem, 2vw, 1.5rem) !important; white-space: nowrap;}
 [data-testid="stDataFrame"] {border: 1px solid rgba(128,128,128,.18); border-radius: 8px;}
 .stButton > button {width: 100%; border-radius: 6px; min-height: 42px;}
 .stTabs [data-baseweb="tab-list"] {gap: .25rem; flex-wrap: wrap;}
@@ -27,7 +28,9 @@ st.markdown("""
 @media (max-width: 640px) {
   .block-container {padding-left: .75rem; padding-right: .75rem;}
   h1 {font-size: 1.7rem !important;}
-    .stTabs [data-baseweb="tab"] {padding: .4rem .55rem; font-size: .85rem;}
+  .stTabs [data-baseweb="tab"] {padding: .4rem .55rem; font-size: .85rem;}
+  [data-testid="stMetric"] {padding: 6px;}
+  [data-testid="stMetricValue"] {font-size: .88rem !important;}
 }
 </style>
 """, unsafe_allow_html=True)
@@ -179,13 +182,27 @@ def load_price_history(ticker: str, start_date: datetime.date, end_date: datetim
     return frame.loc[:, [*required, "Volume"]].dropna(subset=list(required)).sort_index()
 
 
+def chart_x_values(frame: pd.DataFrame, interval: str):
+    """Use ordered category positions so sessions have no overnight/weekend gaps."""
+    intraday = interval.lower() != "1d"
+    labels = []
+    for value in frame.index:
+        stamp = pd.Timestamp(value)
+        if stamp.tzinfo is not None:
+            stamp = stamp.tz_convert("Asia/Kolkata")
+        labels.append(stamp.strftime("%d %b %H:%M" if intraday else "%d %b %Y"))
+    return labels
+
+
 def build_candlestick_chart(
     frame: pd.DataFrame,
     title: str,
     levels: list[tuple[str, float, str]] | None = None,
     markers: list[dict] | None = None,
     show_emas: bool = True,
+    interval: str = "1d",
 ):
+    x_values = chart_x_values(frame, interval)
     fig = make_subplots(
         rows=2,
         cols=1,
@@ -195,7 +212,7 @@ def build_candlestick_chart(
     )
     fig.add_trace(
         go.Candlestick(
-            x=frame.index,
+            x=x_values,
             open=frame["Open"],
             high=frame["High"],
             low=frame["Low"],
@@ -211,7 +228,7 @@ def build_candlestick_chart(
         for span, color in ((20, "#2962ff"), (50, "#ff9800")):
             fig.add_trace(
                 go.Scatter(
-                    x=frame.index,
+                    x=x_values,
                     y=frame["Close"].ewm(span=span, adjust=False).mean(),
                     mode="lines",
                     name=f"{span}-EMA",
@@ -227,7 +244,7 @@ def build_candlestick_chart(
     ]
     fig.add_trace(
         go.Bar(
-            x=frame.index,
+            x=x_values,
             y=frame["Volume"],
             name="Volume",
             marker_color=volume_colors,
@@ -239,17 +256,30 @@ def build_candlestick_chart(
     for label, price, color in levels or []:
         fig.add_hline(
             y=price,
-            line_dash="dash",
+            line_dash="dot",
             line_color=color,
-            annotation_text=f"{label} ₹{price:,.2f}",
-            annotation_position="top left",
+            line_width=1,
             row=1,
             col=1,
+        )
+        fig.add_annotation(
+            x=1.015,
+            y=price,
+            xref="paper",
+            yref="y",
+            text=f"{label} ₹{price:,.2f}",
+            showarrow=False,
+            xanchor="left",
+            yanchor="middle",
+            bgcolor=color,
+            bordercolor=color,
+            borderpad=4,
+            font={"color": "#ffffff", "size": 10},
         )
     for marker in markers or []:
         fig.add_trace(
             go.Scatter(
-                x=[marker["x"]],
+                x=[chart_x_values(pd.DataFrame(index=[marker["x"]]), interval)[0]],
                 y=[marker["y"]],
                 mode="markers+text",
                 text=[marker["label"]],
@@ -266,17 +296,33 @@ def build_candlestick_chart(
         )
 
     fig.update_layout(
-        title=title,
-        template="plotly_white",
-        height=570,
-        margin={"l": 8, "r": 8, "t": 48, "b": 8},
+        title={"text": title, "x": 0.01, "xanchor": "left", "y": 0.99},
+        template="plotly_dark",
+        paper_bgcolor="#0b0e11",
+        plot_bgcolor="#0b0e11",
+        font={"color": "#d1d4dc", "family": "Inter, sans-serif"},
+        height=590,
+        margin={"l": 12, "r": 132, "t": 70, "b": 82},
         hovermode="x unified",
-        legend={"orientation": "h", "yanchor": "bottom", "y": 1.01, "x": 0},
+        legend={"orientation": "h", "yanchor": "top", "y": -0.12, "x": 0},
         xaxis_rangeslider_visible=False,
     )
-    fig.update_yaxes(title_text="Price (INR)", tickprefix="₹", tickformat=",.2f", row=1, col=1)
-    fig.update_yaxes(title_text="Volume", tickformat="~s", row=2, col=1)
-    fig.update_xaxes(showgrid=True, gridcolor="rgba(128,128,128,.15)")
+    fig.update_yaxes(
+        title_text="Price (INR)", tickprefix="₹", tickformat=",.2f",
+        gridcolor="#20252b", zerolinecolor="#20252b",
+        showspikes=True, spikemode="across", spikesnap="cursor",
+        spikecolor="#75808a", spikethickness=1, row=1, col=1,
+    )
+    fig.update_yaxes(
+        title_text="Volume", tickformat="~s", gridcolor="#20252b",
+        zerolinecolor="#20252b", row=2, col=1,
+    )
+    fig.update_xaxes(
+        type="category", categoryorder="array", categoryarray=x_values,
+        showgrid=True, gridcolor="#20252b",
+        showspikes=True, spikemode="across", spikesnap="cursor",
+        spikecolor="#75808a", spikethickness=1,
+    )
     return fig
 
 
@@ -297,10 +343,145 @@ def show_stock_chart(
             "Check the NSE ticker, interval, and Yahoo Finance data limits."
         )
         return frame
-    fig = build_candlestick_chart(frame, title, levels=levels, markers=markers, show_emas=show_emas)
+    fig = build_candlestick_chart(
+        frame, title, levels=levels, markers=markers, show_emas=show_emas, interval=interval,
+    )
     st.plotly_chart(fig, width="stretch", config={"responsive": True, "displaylogo": False})
     st.caption("Yahoo Finance data is unofficial and may be delayed.")
     return frame
+
+
+@st.cache_data(ttl=900, show_spinner=False)
+def yahoo_fundamentals_fallback(ticker: str, quarter_count: int):
+    """Best-effort NSE fundamentals and quarterly income statement from Yahoo."""
+    stock = yf.Ticker(ticker)
+    warnings = []
+    try:
+        info = stock.get_info() or {}
+        if not isinstance(info, dict):
+            info = {}
+    except Exception as exc:
+        info = {}
+        warnings.append(f"Yahoo fundamentals unavailable: {exc}")
+
+    income = pd.DataFrame()
+    for attribute in ("quarterly_income_stmt", "quarterly_financials"):
+        try:
+            candidate = getattr(stock, attribute)
+        except Exception as exc:
+            warnings.append(f"Yahoo {attribute.replace('_', ' ')} unavailable: {exc}")
+            continue
+        if isinstance(candidate, pd.DataFrame) and not candidate.empty:
+            income = candidate
+            break
+
+    def statement_row(aliases):
+        labels = {str(label).strip().lower(): label for label in income.index}
+        for alias in aliases:
+            if alias in labels:
+                return labels[alias]
+        for label in income.index:
+            normalized = str(label).strip().lower()
+            if any(alias in normalized for alias in aliases):
+                return label
+        return None
+
+    revenue_row = statement_row(("total revenue", "operating revenue", "revenue"))
+    profit_row = statement_row((
+        "net income", "net income common stockholders", "net income from continuing operation",
+    ))
+    if revenue_row is None:
+        warnings.append("Yahoo quarterly statement has no revenue row.")
+    if profit_row is None:
+        warnings.append("Yahoo quarterly statement has no net income row.")
+
+    quarters = []
+    for period in sorted(income.columns, key=lambda value: pd.Timestamp(value), reverse=True):
+        def statement_value(row):
+            if row is None:
+                return None
+            value = pd.to_numeric(income.at[row, period], errors="coerce")
+            return None if pd.isna(value) else float(value) / 10_000_000
+
+        stamp = pd.Timestamp(period)
+        quarters.append({
+            "Quarter End": stamp.strftime("%Y-%m-%d"),
+            "Revenue (₹ Cr)": statement_value(revenue_row),
+            "Net Profit (₹ Cr)": statement_value(profit_row),
+        })
+        if len(quarters) >= quarter_count:
+            break
+
+    def numeric_info(*keys):
+        for key in keys:
+            try:
+                value = float(info.get(key))
+            except (TypeError, ValueError):
+                continue
+            if pd.notna(value):
+                return value
+        return None
+
+    market_cap = numeric_info("marketCap")
+    roe = numeric_info("returnOnEquity")
+    return {
+        "entity": info.get("shortName") or info.get("longName") or ticker,
+        "source": "Yahoo Finance fallback · unofficial",
+        "market_cap_cr": market_cap / 10_000_000 if market_cap is not None else None,
+        "pe": numeric_info("trailingPE"),
+        "roe_pct": roe * 100 if roe is not None else None,
+        "quarters": quarters,
+        "warnings": warnings,
+    }
+
+
+def show_yahoo_fundamentals(fundamentals: dict):
+    st.caption(f"{fundamentals['entity']} · {fundamentals['source']} · values in INR")
+    market_col, pe_col, roe_col = st.columns(3)
+    market_cap = fundamentals.get("market_cap_cr")
+    pe = fundamentals.get("pe")
+    roe = fundamentals.get("roe_pct")
+    market_col.metric("Market Cap (₹ Cr)", "—" if market_cap is None else f"₹{market_cap:,.0f}")
+    pe_col.metric("Trailing P/E", "—" if pe is None else f"{pe:,.2f}")
+    roe_col.metric("ROE", "—" if roe is None else f"{roe:.1f}%")
+
+    quarters = fundamentals.get("quarters") or []
+    if quarters:
+        quarter_frame = pd.DataFrame(quarters)
+        st.dataframe(
+            quarter_frame,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Revenue (₹ Cr)": st.column_config.NumberColumn(format="₹%.2f"),
+                "Net Profit (₹ Cr)": st.column_config.NumberColumn(format="₹%.2f"),
+            },
+        )
+        chart_frame = quarter_frame.set_index("Quarter End").sort_index()
+        figure = go.Figure()
+        figure.add_bar(
+            x=chart_frame.index, y=chart_frame["Revenue (₹ Cr)"],
+            name="Revenue", marker_color="#26a69a",
+        )
+        figure.add_bar(
+            x=chart_frame.index, y=chart_frame["Net Profit (₹ Cr)"],
+            name="Net Profit", marker_color="#2962ff",
+        )
+        figure.update_layout(
+            title={"text": "Quarterly Revenue & Net Profit", "x": 0.02, "xanchor": "left"},
+            template="plotly_dark", paper_bgcolor="#0b0e11", plot_bgcolor="#0b0e11",
+            font={"color": "#d1d4dc"}, barmode="group", height=360,
+            margin={"l": 12, "r": 12, "t": 60, "b": 12},
+            yaxis={"title": "₹ Crore", "gridcolor": "#20252b"},
+            xaxis={"type": "category", "categoryorder": "array", "categoryarray": list(chart_frame.index)},
+            legend={"orientation": "h", "y": 1.02, "x": 0},
+        )
+        st.plotly_chart(figure, width="stretch", config={"responsive": True, "displaylogo": False})
+    else:
+        st.info("Yahoo Finance did not return quarterly income statement rows for this ticker.")
+
+    for warning in fundamentals.get("warnings") or []:
+        st.caption(warning)
 
 
 scanner_tab, analyzer_tab, analyst_tab, budget_broker_tab, alerts_deals_tab, timemachine_tab = st.tabs([
@@ -383,9 +564,11 @@ with scanner_tab:
             )
 
 with analyzer_tab:
-    col_input, col_action = st.columns([3, 1])
+    col_input, col_timeframe, col_action = st.columns([3, 1, 1])
     with col_input:
         ticker_input = st.text_input("NSE ticker", placeholder="RELIANCE or RELIANCE.NS")
+    with col_timeframe:
+        analyzer_timeframe = st.selectbox("Chart timeframe", ["5m", "15m", "1h", "1D"], index=3)
     with col_action:
         analyze = st.button("Analyze", type="primary", use_container_width=True)
 
@@ -406,16 +589,14 @@ with analyzer_tab:
             if entry_doc is None:
                 entry_doc = json.loads((ROOT / "trader" / "entry.json").read_text(encoding="utf-8")) if (ROOT / "trader" / "entry.json").exists() else None
 
-            entry_col, exit_col = st.columns(2)
-            with entry_col:
-                st.markdown("**Entry**")
-                if entry_code not in (0, 1) or entry_doc is None:
-                    st.error(entry_stderr or entry_stdout or f"Entry check failed with code {entry_code}")
-                else:
-                    status = str(entry_doc.get("status", "UNKNOWN")).upper()
-                    st.metric("Status", status)
-                    if entry_doc.get("reason"):
-                        st.caption(entry_doc["reason"])
+            st.markdown("**Entry**")
+            if entry_code not in (0, 1) or entry_doc is None:
+                st.error(entry_stderr or entry_stdout or f"Entry check failed with code {entry_code}")
+            else:
+                status = str(entry_doc.get("status", "UNKNOWN")).upper()
+                st.metric("Status", status)
+                if entry_doc.get("reason"):
+                    st.caption(entry_doc["reason"])
 
             entry_price = None
             or_high = or_low = None
@@ -443,15 +624,14 @@ with analyzer_tab:
                     exit_code, exit_stdout, exit_stderr = 1, "", "Entry facts are unavailable for an exit plan"
 
             exit_doc = parse_json_output(exit_stdout)
-            with exit_col:
-                st.markdown("**Exit Plan**")
-                if exit_code != 0 or exit_doc is None:
-                    st.error(exit_stderr or exit_stdout or "Exit plan could not be created")
-                else:
-                    m1, m2, m3 = st.columns(3)
-                    m1.metric("Entry", f"₹{float(exit_doc.get('entry', 0)):,.2f}")
-                    m2.metric("Stop", f"₹{float(exit_doc.get('stop', 0)):,.2f}")
-                    m3.metric("Target", f"₹{float(exit_doc.get('target', 0)):,.2f}")
+            st.markdown("**Exit Plan**")
+            if exit_code != 0 or exit_doc is None:
+                st.error(exit_stderr or exit_stdout or "Exit plan could not be created")
+            else:
+                m1, m2, m3 = st.columns(3)
+                m1.metric("Entry", f"₹{float(exit_doc.get('entry', 0)):,.2f}")
+                m2.metric("Stop", f"₹{float(exit_doc.get('stop', 0)):,.2f}")
+                m3.metric("Target", f"₹{float(exit_doc.get('target', 0)):,.2f}")
 
             chart_levels = []
             chart_entry = exit_doc.get("entry") if exit_doc else entry_price
@@ -465,12 +645,14 @@ with analyzer_tab:
                     if exit_doc.get(key) is not None:
                         chart_levels.append((label, float(exit_doc[key]), color))
             st.markdown("#### Price Chart")
+            chart_interval = {"5m": "5m", "15m": "15m", "1h": "1h", "1D": "1d"}[analyzer_timeframe]
+            history_days = {"5m": 7, "15m": 60, "1h": 365, "1d": 365}[chart_interval]
             show_stock_chart(
                 ticker,
-                datetime.date.today() - datetime.timedelta(days=365),
+                datetime.date.today() - datetime.timedelta(days=history_days),
                 datetime.date.today(),
-                "1d",
-                f"{ticker} · Daily",
+                chart_interval,
+                f"{ticker} · {'Daily' if analyzer_timeframe == '1D' else analyzer_timeframe}",
                 levels=chart_levels,
             )
 
@@ -522,7 +704,7 @@ with analyzer_tab:
 
 with analyst_tab:
     st.subheader("NSE Fundamentals & Filings")
-    st.caption("Official NSE financial filings in INR. This report is analysis, not a buy/sell recommendation.")
+    st.caption("Official NSE filings when available; any Yahoo Finance fallback is labeled. Analysis only, not a recommendation.")
     with st.form("analyst_form"):
         analyst_col, quarters_col = st.columns([3, 1])
         with analyst_col:
@@ -543,7 +725,20 @@ with analyst_tab:
             with st.spinner(f"Reading NSE filings for {ticker}..."):
                 code, stdout, stderr = run_skill("trader-analyst", "facts.py", args, timeout=240)
             reports = parse_json_output(stdout)
-            if code not in (0, 1):
+            has_nse_quarterly_income = False
+            if isinstance(reports, list):
+                for report in reports:
+                    rows = (report.get("result") or {}).get("rows") or []
+                    if rows and rows[0].get("revenue") is not None and rows[0].get("net_income") is not None:
+                        has_nse_quarterly_income = True
+                        break
+            if ticker.endswith(".NS") and not has_nse_quarterly_income:
+                if stderr or stdout:
+                    st.warning(stderr or stdout)
+                with st.spinner(f"Falling back to Yahoo Finance fundamentals for {ticker}..."):
+                    fallback = yahoo_fundamentals_fallback(ticker, int(analyst_quarters))
+                show_yahoo_fundamentals(fallback)
+            elif code not in (0, 1):
                 show_skill_output(code, stdout, stderr)
             elif isinstance(reports, list):
                 if stderr:
