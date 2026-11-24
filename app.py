@@ -1,10 +1,14 @@
+import datetime
 import json
 import subprocess
 import sys
 from pathlib import Path
 
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
+import yfinance as yf
+from plotly.subplots import make_subplots
 
 ROOT = Path(__file__).resolve().parent
 SKILLS = ROOT / "skills"
@@ -154,6 +158,151 @@ def format_watchlist(frame: pd.DataFrame):
     return frame
 
 
+@st.cache_data(ttl=900, show_spinner=False)
+def load_price_history(ticker: str, start_date: datetime.date, end_date: datetime.date, interval: str):
+    frame = yf.Ticker(ticker).history(
+        start=start_date.isoformat(),
+        end=(end_date + datetime.timedelta(days=1)).isoformat(),
+        interval=interval,
+        auto_adjust=False,
+        prepost=False,
+    )
+    if frame.empty:
+        return frame
+    if isinstance(frame.columns, pd.MultiIndex):
+        frame.columns = frame.columns.get_level_values(0)
+    required = ("Open", "High", "Low", "Close")
+    if any(column not in frame.columns for column in required):
+        return pd.DataFrame()
+    if "Volume" not in frame.columns:
+        frame["Volume"] = 0
+    return frame.loc[:, [*required, "Volume"]].dropna(subset=list(required)).sort_index()
+
+
+def build_candlestick_chart(
+    frame: pd.DataFrame,
+    title: str,
+    levels: list[tuple[str, float, str]] | None = None,
+    markers: list[dict] | None = None,
+    show_emas: bool = True,
+):
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.035,
+        row_heights=[0.76, 0.24],
+    )
+    fig.add_trace(
+        go.Candlestick(
+            x=frame.index,
+            open=frame["Open"],
+            high=frame["High"],
+            low=frame["Low"],
+            close=frame["Close"],
+            name="NSE",
+            increasing_line_color="#26a69a",
+            decreasing_line_color="#ef5350",
+        ),
+        row=1,
+        col=1,
+    )
+    if show_emas:
+        for span, color in ((20, "#2962ff"), (50, "#ff9800")):
+            fig.add_trace(
+                go.Scatter(
+                    x=frame.index,
+                    y=frame["Close"].ewm(span=span, adjust=False).mean(),
+                    mode="lines",
+                    name=f"{span}-EMA",
+                    line={"color": color, "width": 1.4},
+                ),
+                row=1,
+                col=1,
+            )
+
+    volume_colors = [
+        "#26a69a" if close >= open_price else "#ef5350"
+        for open_price, close in zip(frame["Open"], frame["Close"])
+    ]
+    fig.add_trace(
+        go.Bar(
+            x=frame.index,
+            y=frame["Volume"],
+            name="Volume",
+            marker_color=volume_colors,
+            opacity=0.75,
+        ),
+        row=2,
+        col=1,
+    )
+    for label, price, color in levels or []:
+        fig.add_hline(
+            y=price,
+            line_dash="dash",
+            line_color=color,
+            annotation_text=f"{label} ₹{price:,.2f}",
+            annotation_position="top left",
+            row=1,
+            col=1,
+        )
+    for marker in markers or []:
+        fig.add_trace(
+            go.Scatter(
+                x=[marker["x"]],
+                y=[marker["y"]],
+                mode="markers+text",
+                text=[marker["label"]],
+                textposition="top center",
+                name=marker["label"],
+                marker={
+                    "color": marker["color"],
+                    "size": 12,
+                    "symbol": marker.get("symbol", "circle"),
+                },
+            ),
+            row=1,
+            col=1,
+        )
+
+    fig.update_layout(
+        title=title,
+        template="plotly_white",
+        height=570,
+        margin={"l": 8, "r": 8, "t": 48, "b": 8},
+        hovermode="x unified",
+        legend={"orientation": "h", "yanchor": "bottom", "y": 1.01, "x": 0},
+        xaxis_rangeslider_visible=False,
+    )
+    fig.update_yaxes(title_text="Price (INR)", tickprefix="₹", tickformat=",.2f", row=1, col=1)
+    fig.update_yaxes(title_text="Volume", tickformat="~s", row=2, col=1)
+    fig.update_xaxes(showgrid=True, gridcolor="rgba(128,128,128,.15)")
+    return fig
+
+
+def show_stock_chart(
+    ticker: str,
+    start_date: datetime.date,
+    end_date: datetime.date,
+    interval: str,
+    title: str,
+    levels: list[tuple[str, float, str]] | None = None,
+    markers: list[dict] | None = None,
+    show_emas: bool = True,
+):
+    frame = load_price_history(ticker, start_date, end_date, interval)
+    if frame.empty:
+        st.info(
+            f"No price bars were returned for {ticker} in this date range. "
+            "Check the NSE ticker, interval, and Yahoo Finance data limits."
+        )
+        return frame
+    fig = build_candlestick_chart(frame, title, levels=levels, markers=markers, show_emas=show_emas)
+    st.plotly_chart(fig, width="stretch", config={"responsive": True, "displaylogo": False})
+    st.caption("Yahoo Finance data is unofficial and may be delayed.")
+    return frame
+
+
 scanner_tab, analyzer_tab, analyst_tab, budget_broker_tab, alerts_deals_tab, timemachine_tab = st.tabs([
     "NSE Scanner", "Quick Stock Analyzer", "Analyst", "Budget & Broker", "Alerts & Deals", "Time Machine",
 ])
@@ -212,6 +361,26 @@ with scanner_tab:
                 "Volume": st.column_config.NumberColumn(format="%,d"),
             },
         )
+        chart_symbols = sorted({
+            nse_ticker(str(symbol))
+            for symbol in frame["Symbol"]
+            if str(symbol).strip()
+        })
+        if chart_symbols:
+            chart_ticker = st.selectbox(
+                "Chart a scanned NSE stock",
+                chart_symbols,
+                format_func=lambda symbol: symbol.removesuffix(".NS"),
+                key="scanner_chart_ticker",
+            )
+            st_stock_chart_start = datetime.date.today() - datetime.timedelta(days=365)
+            show_stock_chart(
+                chart_ticker,
+                st_stock_chart_start,
+                datetime.date.today(),
+                "1d",
+                f"{chart_ticker} · Daily",
+            )
 
 with analyzer_tab:
     col_input, col_action = st.columns([3, 1])
@@ -283,6 +452,27 @@ with analyzer_tab:
                     m1.metric("Entry", f"₹{float(exit_doc.get('entry', 0)):,.2f}")
                     m2.metric("Stop", f"₹{float(exit_doc.get('stop', 0)):,.2f}")
                     m3.metric("Target", f"₹{float(exit_doc.get('target', 0)):,.2f}")
+
+            chart_levels = []
+            chart_entry = exit_doc.get("entry") if exit_doc else entry_price
+            if chart_entry is not None:
+                chart_levels.append(("Entry", float(chart_entry), "#2962ff"))
+            if exit_doc:
+                for key, label, color in (
+                    ("stop", "Stop-Loss", "#ef5350"),
+                    ("target", "Target", "#26a69a"),
+                ):
+                    if exit_doc.get(key) is not None:
+                        chart_levels.append((label, float(exit_doc[key]), color))
+            st.markdown("#### Price Chart")
+            show_stock_chart(
+                ticker,
+                datetime.date.today() - datetime.timedelta(days=365),
+                datetime.date.today(),
+                "1d",
+                f"{ticker} · Daily",
+                levels=chart_levels,
+            )
 
             risk_col, news_col = st.columns(2)
             with risk_col:
@@ -618,7 +808,157 @@ with alerts_deals_tab:
 
 with timemachine_tab:
     st.subheader("Historical NSE Replay")
-    st.caption("Replays a saved trader-exit plan against recent 5-minute history. Simulation is not a prediction.")
+    st.caption(
+        "Step through historical NSE bars with a simple simulated long trade. "
+        "This is an educational replay, not a prediction or investment recommendation."
+    )
+    today = datetime.date.today()
+    with st.form("timemachine_chart_form"):
+        replay_symbol_input = st.text_input("NSE ticker", value="RELIANCE", placeholder="RELIANCE or RELIANCE.NS")
+        date_col, end_col, interval_col = st.columns([2, 2, 1])
+        with date_col:
+            replay_start = st.date_input(
+                "From",
+                value=today - datetime.timedelta(days=7),
+                max_value=today,
+            )
+        with end_col:
+            replay_end = st.date_input("Through", value=today, max_value=today)
+        with interval_col:
+            replay_interval = st.selectbox("Bar interval", ["5m", "15m", "1h", "1d"], index=0)
+        stop_pct = st.number_input("Simulated stop-loss (%)", min_value=0.1, value=1.0, step=0.1)
+        target_pct = st.number_input("Simulated target (%)", min_value=0.1, value=2.0, step=0.1)
+        replay_quantity = st.number_input("Shares", min_value=1, value=1, step=1)
+        replay_chart_submit = st.form_submit_button("Load historical replay", type="primary")
+
+    if replay_chart_submit:
+        replay_ticker = nse_ticker(replay_symbol_input)
+        if not replay_ticker:
+            st.warning("Enter an NSE ticker.")
+            st.session_state.pop("timemachine_chart_request", None)
+        elif replay_start > replay_end:
+            st.warning("The start date must be on or before the end date.")
+            st.session_state.pop("timemachine_chart_request", None)
+        else:
+            st.session_state["timemachine_chart_request"] = {
+                "ticker": replay_ticker,
+                "start": replay_start,
+                "end": replay_end,
+                "interval": replay_interval,
+                "stop_pct": float(stop_pct),
+                "target_pct": float(target_pct),
+                "quantity": int(replay_quantity),
+            }
+
+    chart_request = st.session_state.get("timemachine_chart_request")
+    if chart_request:
+        replay_frame = load_price_history(
+            chart_request["ticker"],
+            chart_request["start"],
+            chart_request["end"],
+            chart_request["interval"],
+        )
+        if replay_frame.empty:
+            st.info(
+                "No bars were returned for this ticker/date/interval. "
+                "Yahoo Finance keeps intraday history for a limited time; try a shorter or more recent range."
+            )
+        else:
+            entry_price = float(replay_frame["Close"].iloc[0])
+            stop_price = entry_price * (1 - chart_request["stop_pct"] / 100)
+            target_price = entry_price * (1 + chart_request["target_pct"] / 100)
+            exit_index = len(replay_frame) - 1
+            exit_price = float(replay_frame["Close"].iloc[-1])
+            exit_reason = "Range end"
+            for index in range(1, len(replay_frame)):
+                bar = replay_frame.iloc[index]
+                if float(bar["Low"]) <= stop_price:
+                    exit_index = index
+                    exit_price = stop_price
+                    exit_reason = "Stop-Loss"
+                    break
+                if float(bar["High"]) >= target_price:
+                    exit_index = index
+                    exit_price = target_price
+                    exit_reason = "Target"
+                    break
+
+            if len(replay_frame) > 1:
+                step_count = st.slider(
+                    "Replay bar",
+                    min_value=1,
+                    max_value=len(replay_frame),
+                    value=min(25, len(replay_frame)),
+                    key=(
+                        f"timemachine_step_{chart_request['ticker']}_"
+                        f"{chart_request['start']}_{chart_request['end']}_{chart_request['interval']}"
+                    ),
+                    help="Move one bar at a time to reveal the historical price action.",
+                )
+            else:
+                step_count = 1
+                st.caption("Only one bar is available in this range.")
+
+            visible_frame = replay_frame.iloc[:step_count]
+            exit_reached = step_count - 1 >= exit_index
+            last_close = float(visible_frame["Close"].iloc[-1])
+            pnl = (
+                (exit_price - entry_price) * chart_request["quantity"]
+                if exit_reached
+                else (last_close - entry_price) * chart_request["quantity"]
+            )
+            metric_col, status_col, entry_col = st.columns(3)
+            metric_col.metric(
+                "Simulated P&L" if exit_reached else "Open P&L",
+                f"₹{pnl:+,.2f}",
+            )
+            status_col.metric("Replay status", exit_reason if exit_reached else "Trade open")
+            entry_col.metric("Entry", f"₹{entry_price:,.2f}")
+
+            replay_markers = [
+                {
+                    "x": replay_frame.index[0],
+                    "y": entry_price,
+                    "label": "Entry",
+                    "color": "#2962ff",
+                    "symbol": "triangle-up",
+                }
+            ]
+            if exit_reached:
+                replay_markers.append({
+                    "x": replay_frame.index[exit_index],
+                    "y": exit_price,
+                    "label": exit_reason,
+                    "color": "#ef5350" if exit_reason == "Stop-Loss" else "#26a69a",
+                    "symbol": "x",
+                })
+            chart_levels = [
+                ("Entry", entry_price, "#2962ff"),
+                ("Stop-Loss", stop_price, "#ef5350"),
+                ("Target", target_price, "#26a69a"),
+            ]
+            replay_fig = build_candlestick_chart(
+                visible_frame,
+                f"{chart_request['ticker']} · {chart_request['interval']} replay",
+                levels=chart_levels,
+                markers=replay_markers,
+                show_emas=False,
+            )
+            st.plotly_chart(
+                replay_fig,
+                width="stretch",
+                config={"responsive": True, "displaylogo": False},
+            )
+            st.caption(
+                f"Entry is the first bar close at ₹{entry_price:,.2f}; "
+                f"the simulated long exits at its first stop/target touch, or at the range end. "
+                f"Quantity: {chart_request['quantity']} share(s). "
+                "If one bar touches both levels, the stop is counted first."
+            )
+
+    st.divider()
+    st.subheader("Trade-plan probability analysis")
+    st.caption("Optional trader-timemachine Monte Carlo analysis uses the saved trader-exit plan.")
     replay_plan_path = ROOT / "trader" / "plan.json"
     try:
         replay_plan = json.loads(replay_plan_path.read_text(encoding="utf-8")) if replay_plan_path.exists() else None
