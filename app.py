@@ -1,7 +1,10 @@
 import datetime
+import hashlib
 import json
+import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import pandas as pd
@@ -9,12 +12,18 @@ import plotly.graph_objects as go
 import streamlit as st
 import yfinance as yf
 from plotly.subplots import make_subplots
+from nse_live import get_live_quote
+from orchestrator import SKILLS as AUTOPILOT_SKILLS, ensure_portfolio, run_autopilot
 
 ROOT = Path(__file__).resolve().parent
 SKILLS = ROOT / "skills"
 WATCHLIST = ROOT / "trader" / "watchlist.json"
 
 st.set_page_config(page_title="Indian NSE Trading Desk", page_icon="₹", layout="wide")
+try:
+    ensure_portfolio(ROOT)
+except (OSError, ValueError) as exc:
+    st.error(f"Could not initialize trader/portfolio.json: {exc}")
 
 st.markdown("""
 <style>
@@ -38,12 +47,32 @@ st.markdown("""
 st.title("Indian NSE Trading Desk")
 st.caption("NSE · INR (₹) · IST 9:15 AM–3:30 PM")
 
+with st.sidebar.expander("Optional Broker Settings", expanded=False):
+    broker_mode = st.selectbox(
+        "Broker mode",
+        ["Off / Paper Mode", "Angel One (optional)", "DhanHQ (optional)"],
+        key="optional_broker_mode",
+    )
+    st.caption(
+        "Free NSE/Yahoo quotes and paper proposals do not need broker credentials. "
+        "Values stay in this Streamlit session; they are not written to files or used by the pipeline."
+    )
+    if broker_mode == "Angel One (optional)":
+        st.text_input("Angel One API key", type="password", key="optional_angel_api_key")
+        st.text_input("Angel One client code", key="optional_angel_client_code")
+        st.text_input("Angel One PIN", type="password", key="optional_angel_pin")
+        st.text_input("Angel One TOTP secret", type="password", key="optional_angel_totp")
+    elif broker_mode == "DhanHQ (optional)":
+        st.text_input("DhanHQ client ID", key="optional_dhan_client_id")
+        st.text_input("DhanHQ access token", type="password", key="optional_dhan_access_token")
+
 
 def nse_ticker(value: str) -> str:
-    ticker = value.strip().upper()
+    ticker = re.sub(r"\s+", "", str(value or "")).upper()
     if not ticker:
         return ""
-    ticker = ticker.replace(".NS", "")
+    while ticker.endswith(".NS"):
+        ticker = ticker[:-3]
     return f"{ticker}.NS"
 
 
@@ -137,7 +166,15 @@ def load_watchlist():
     except (json.JSONDecodeError, OSError) as exc:
         return {"error": str(exc)}, pd.DataFrame()
 
-    hits = doc.get("hits", [])
+    hits = doc.get("stocks") or doc.get("hits", [])
+    company_names = {}
+    try:
+        for line in (ROOT / "trader" / "universe.txt").read_text(encoding="utf-8").splitlines():
+            symbol, separator, name = line.partition("|")
+            if separator:
+                company_names[nse_ticker(symbol)] = name.strip()
+    except OSError:
+        pass
     rows = []
     for hit in hits:
         setups = hit.get("setups") or hit.get("setup") or []
@@ -145,10 +182,13 @@ def load_watchlist():
             setups = [setups]
         rows.append({
             "Symbol": hit.get("symbol", ""),
+            "Company": company_names.get(nse_ticker(str(hit.get("symbol", ""))), ""),
             "Price (₹)": hit.get("price"),
             "RSI": hit.get("rsi"),
             "Setup": ", ".join(setups),
             "Volume": hit.get("volume"),
+            "Avg Daily Volume": hit.get("average_daily_volume"),
+            "Liquid": hit.get("liquid"),
             "Close Date": hit.get("close_date", ""),
         })
     frame = pd.DataFrame(rows)
@@ -180,6 +220,32 @@ def load_price_history(ticker: str, start_date: datetime.date, end_date: datetim
     if "Volume" not in frame.columns:
         frame["Volume"] = 0
     return frame.loc[:, [*required, "Volume"]].dropna(subset=list(required)).sort_index()
+
+
+@st.cache_data(ttl=60, show_spinner=False)
+def load_live_daily_history(ticker: str):
+    """Fetch a recent daily window for the scanner's latest quote and setup metrics."""
+    frame = yf.Ticker(ticker).history(
+        period="3mo",
+        interval="1d",
+        auto_adjust=False,
+        prepost=False,
+    )
+    if frame.empty:
+        return frame
+    if isinstance(frame.columns, pd.MultiIndex):
+        frame.columns = frame.columns.get_level_values(0)
+    required = ("Open", "High", "Low", "Close")
+    if any(column not in frame.columns for column in required):
+        return pd.DataFrame()
+    if "Volume" not in frame.columns:
+        frame["Volume"] = 0
+    return frame.loc[:, [*required, "Volume"]].dropna(subset=list(required)).sort_index()
+
+
+@st.cache_data(ttl=20, show_spinner=False)
+def load_live_quote(ticker: str):
+    return get_live_quote(ticker)
 
 
 def chart_x_values(frame: pd.DataFrame, interval: str):
@@ -484,9 +550,193 @@ def show_yahoo_fundamentals(fundamentals: dict):
         st.caption(warning)
 
 
-scanner_tab, analyzer_tab, analyst_tab, budget_broker_tab, alerts_deals_tab, timemachine_tab = st.tabs([
-    "NSE Scanner", "Quick Stock Analyzer", "Analyst", "Budget & Broker", "Alerts & Deals", "Time Machine",
-])
+if st.session_state.pop("_navigate_to_analyzer", False):
+    deep_analyze_ticker = st.session_state.pop("_deep_analyze_ticker", None)
+    if deep_analyze_ticker:
+        st.session_state["analyzer_ticker_input"] = deep_analyze_ticker
+        st.session_state["analyzer_run_requested"] = True
+        st.session_state["trading_tabs"] = "Quick Stock Analyzer"
+
+autopilot_tab, scanner_tab, analyzer_tab, analyst_tab, budget_broker_tab, alerts_deals_tab, timemachine_tab = st.tabs(
+    [
+        "11-Skill Auto-Pilot",
+        "NSE Scanner",
+        "Quick Stock Analyzer",
+        "Analyst",
+        "Budget & Broker",
+        "Alerts & Deals",
+        "Time Machine",
+    ],
+    key="trading_tabs",
+    on_change="rerun",
+)
+
+with autopilot_tab:
+    st.subheader("Strict NSE trade qualification")
+    st.caption(
+        "Runs the 11 local trader skills in order. Candidates are eliminated on missing data, "
+        "R:R below 1.5, Monte Carlo win probability below 50% or negative expected value, "
+        "and failed risk checks. Tickets are paper proposals only."
+    )
+    if st.button("Run 11-Skill Auto-Pilot", type="primary", key="autopilot_run"):
+        progress_box = st.empty()
+        progress_log = []
+
+        def update_autopilot(step, skill, message):
+            progress_log.append(f"{step}/11 · {skill} · {message}")
+            progress_box.markdown("\n\n".join(f"- {line}" for line in progress_log[-11:]))
+
+        with st.spinner("Executing qualification pipeline; no trades are sent to a broker..."):
+            try:
+                st.session_state["autopilot_result"] = run_autopilot(ROOT, update_autopilot)
+            except (OSError, ValueError, RuntimeError) as exc:
+                st.session_state["autopilot_result"] = {
+                    "error": str(exc),
+                    "qualified": [],
+                    "verification": [
+                        {
+                            "skill": skill,
+                            "status": "FAIL" if index == 0 else "WARN",
+                            "summary": str(exc) if index == 0 else "Not run because the pipeline stopped.",
+                            "output": str(exc) if index == 0 else "Not run because the pipeline stopped.",
+                        }
+                        for index, skill in enumerate(AUTOPILOT_SKILLS)
+                    ],
+                    "market": {"mood": "Caution", "reason": "Pipeline error; no trades qualified."},
+                }
+
+    autopilot_result = st.session_state.get("autopilot_result")
+    if autopilot_result:
+        mood = autopilot_result.get("market") or {}
+        mood_label = mood.get("mood", "Caution")
+        mood_color = {"Bullish": "🟢", "Caution": "🟠", "Bearish": "🔴"}.get(mood_label, "🟠")
+        st.markdown(f"### {mood_color} Market Mood: **{mood_label}**")
+        st.caption(mood.get("reason", "Market regime data unavailable."))
+        if autopilot_result.get("error"):
+            st.error(autopilot_result["error"])
+        qualified = autopilot_result.get("qualified") or []
+        if not qualified:
+            st.warning("No Qualified Trade Found Today (Capital Protected)")
+        else:
+            for trade in qualified:
+                plan = trade["plan"]
+                st.markdown(f"### Best Trade · {trade['symbol']}")
+                st.caption("Rules-qualified paper proposal; not a recommendation.")
+                quote = trade.get("quote") or {}
+                p1, p2, p3, p4, p5, p6, p7, p8 = st.columns(8)
+                p1.metric("Entry", f"₹{plan['entry']:,.2f}")
+                p2.metric("SL", f"₹{plan['stop']:,.2f}")
+                p3.metric("Target", f"₹{plan['target']:,.2f}")
+                p4.metric("Qty", f"{trade['sizing']['qty']:,}")
+                p5.metric("Risk", f"₹{trade['sizing']['max_loss']:,.2f}")
+                p6.metric("R:R", f"{plan['reward_risk']:.2f}")
+                p7.metric("LTP", "—" if quote.get("price") is None else f"₹{quote['price']:,.2f}")
+                p8.metric(
+                    "Day change",
+                    "—" if quote.get("change_pct") is None else f"{quote['change_pct']:+.2f}%",
+                )
+                if quote:
+                    st.caption(f"● {quote['source']} · quote volume {quote.get('volume') or '—'}")
+
+                chart_days = datetime.date.today() - datetime.timedelta(days=60)
+                chart_frame = load_price_history(
+                    trade["symbol"], chart_days, datetime.date.today(), "5m")
+                if not chart_frame.empty:
+                    candle_fig = build_candlestick_chart(
+                        chart_frame,
+                        f"{trade['symbol']} · 5-minute candles",
+                        levels=[
+                            ("Entry", plan["entry"], "#2962ff"),
+                            ("Stop-Loss", plan["stop"], "#ef5350"),
+                            ("Target", plan["target"], "#26a69a"),
+                        ],
+                        interval="5m",
+                    )
+                    st.plotly_chart(
+                        candle_fig, width="stretch",
+                        config={"responsive": True, "displaylogo": False},
+                    )
+                else:
+                    st.info(f"No candlestick bars returned for {trade['symbol']}.")
+
+                mc = trade.get("timemachine", {}).get("mc") or {}
+                if trade.get("negative_news"):
+                    st.warning("Negative-news keywords matched a headline; inspect the linked source before acting.")
+                if mc.get("bands"):
+                    fan = go.Figure()
+                    band_times = mc.get("band_times") or list(range(len(mc["bands"])))
+                    for column, label, color in ((4, "90% band", "#607d8b"), (3, "Middle half", "#2962ff")):
+                        fan.add_trace(go.Scatter(
+                            x=band_times, y=[row[column] for row in mc["bands"]],
+                            mode="lines", name=label, line={"color": color, "width": 1},
+                        ))
+                    fan.add_trace(go.Scatter(
+                        x=band_times, y=[row[2] for row in mc["bands"]],
+                        mode="lines", name="Median", line={"color": "#26a69a", "width": 2},
+                    ))
+                    fan.update_layout(
+                        title=f"{trade['symbol']} · 500-path Monte Carlo fan",
+                        template="plotly_dark", paper_bgcolor="#0b0e11",
+                        plot_bgcolor="#0b0e11", font={"color": "#d1d4dc"},
+                        yaxis={"title": "Price (INR)", "tickprefix": "₹"},
+                    )
+                    st.plotly_chart(
+                        fan, width="stretch",
+                        config={"responsive": True, "displaylogo": False},
+                    )
+                histogram = mc.get("hist_R") or mc.get("hist") or {}
+                if histogram.get("bins"):
+                    left, right = histogram.get("lo", 0), histogram.get("hi", 0)
+                    if mc.get("hist_R"):
+                        risk_per_share = plan["entry"] - plan["stop"]
+                        pnl_values = [
+                            (left + (right - left) * (index + 0.5) / len(histogram["bins"]))
+                            * risk_per_share * trade["sizing"]["qty"]
+                            for index in range(len(histogram["bins"]))
+                        ]
+                    else:
+                        pnl_values = [
+                            (left + (right - left) * index / len(histogram["bins"]) - plan["entry"])
+                            * trade["sizing"]["qty"]
+                            for index in range(len(histogram["bins"]))
+                        ]
+                    pnl_fig = go.Figure(go.Bar(x=pnl_values, y=histogram["bins"], name="P&L distribution"))
+                    pnl_fig.update_layout(
+                        title="Monte Carlo P&L distribution (₹)",
+                        template="plotly_dark", paper_bgcolor="#0b0e11",
+                        plot_bgcolor="#0b0e11", font={"color": "#d1d4dc"},
+                        xaxis={"title": "Simulated P&L (₹)"},
+                        yaxis={"title": "Path count"},
+                    )
+                    st.plotly_chart(
+                        pnl_fig, width="stretch",
+                        config={"responsive": True, "displaylogo": False},
+                    )
+                st.caption(
+                    f"Monte Carlo green-path probability: {mc.get('p_green', 0):.1%} · "
+                    f"Expected value: {mc.get('avg_R', 0):+.3f}R · "
+                    f"Institutional-deal conviction points: {trade.get('conviction_score', 0)}"
+                )
+                if st.button(
+                    f"Load {trade['symbol']} in Quick Stock Analyzer",
+                    key=f"autopilot_analyze_{trade['symbol']}",
+                ):
+                    st.session_state["analyzer_ticker_input"] = trade["symbol"]
+                    st.session_state["analyzer_run_requested"] = True
+                    st.info("Ticker loaded. Open the Quick Stock Analyzer tab to see its fresh analysis.")
+
+        verification = autopilot_result.get("verification") or []
+        if verification:
+            with st.expander("11-Skill Verification Table", expanded=False):
+                table_rows = [{
+                    "Skill": row["skill"],
+                    "Status": row["status"],
+                    "Real output": row["summary"],
+                } for row in verification]
+                st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
+                for row in verification:
+                    with st.expander(f"{row['skill']} · {row['status']}"):
+                        st.code(row.get("output") or row["summary"], language="text")
 
 with scanner_tab:
     col1, col2 = st.columns(2)
@@ -520,11 +770,6 @@ with scanner_tab:
     elif frame.empty:
         st.info("No watchlist data yet. Run a scanner mode above.")
     else:
-        meta1, meta2, meta3 = st.columns(3)
-        meta1.metric("Mode", str(doc.get("mode", "—")).upper())
-        meta2.metric("As of", str(doc.get("as_of", "—")))
-        meta3.metric("Watchlist", len(frame))
-
         search = st.text_input("Search symbols or setup", key="watchlist_search")
         filtered = frame
         if search:
@@ -532,45 +777,160 @@ with scanner_tab:
             mask = filtered.astype(str).apply(lambda column: column.str.casefold().str.contains(needle, regex=False)).any(axis=1)
             filtered = filtered[mask]
 
-        st.dataframe(
+        filtered_symbols = "\x1f".join(
+            nse_ticker(str(symbol)) for symbol in filtered.get("Symbol", [])
+        )
+        table_key = "scanner_watchlist_" + hashlib.sha1(
+            filtered_symbols.encode("utf-8")
+        ).hexdigest()[:12]
+
+        meta1, meta2, meta3 = st.columns(3)
+        meta1.metric("Mode", str(doc.get("mode", "—")).upper())
+        meta2.metric("As of", str(doc.get("as_of", "—")))
+        with meta3:
+            with st.popover(f"Watchlist: {len(frame)} Stocks"):
+                popup_filter = st.text_input(
+                    "Filter stocks",
+                    placeholder="Company or ticker",
+                    key="watchlist_popup_filter",
+                )
+                popup_rows = frame
+                if popup_filter:
+                    popup_needle = popup_filter.casefold()
+                    popup_mask = popup_rows[["Symbol", "Company"]].astype(str).apply(
+                        lambda column: column.str.casefold().str.contains(
+                            popup_needle, regex=False
+                        )
+                    ).any(axis=1)
+                    popup_rows = popup_rows[popup_mask]
+                st.caption(f"{len(popup_rows)} of {len(frame)} stocks")
+                for start in range(0, len(popup_rows), 3):
+                    button_columns = st.columns(3)
+                    for column, (row_index, row) in zip(
+                        button_columns,
+                        popup_rows.iloc[start : start + 3].iterrows(),
+                    ):
+                        symbol = nse_ticker(str(row["Symbol"]))
+                        company_value = row.get("Company")
+                        company = (
+                            str(company_value).strip()
+                            if pd.notna(company_value)
+                            else ""
+                        )
+                        button_label = f"{company} · {symbol}" if company else symbol
+                        with column:
+                            if st.button(
+                                button_label,
+                                key=f"watchlist_pick_{row_index}_{symbol}",
+                                help=f"Show {symbol} chart",
+                            ):
+                                st.session_state["selected_scanner_symbol"] = symbol
+                                st.session_state.pop(table_key, None)
+
+        table_event = st.dataframe(
             format_watchlist(filtered),
             use_container_width=True,
+            height=560,
             hide_index=True,
+            on_select="rerun",
+            selection_mode="single-row",
+            key=table_key,
             column_config={
                 "Price (₹)": st.column_config.NumberColumn(format="₹%.2f"),
                 "RSI": st.column_config.NumberColumn(format="%.1f"),
                 "Volume": st.column_config.NumberColumn(format="%,d"),
+                "Avg Daily Volume": st.column_config.NumberColumn(format="%,d"),
             },
         )
-        chart_symbols = sorted({
-            nse_ticker(str(symbol))
-            for symbol in frame["Symbol"]
-            if str(symbol).strip()
-        })
-        if chart_symbols:
-            chart_ticker = st.selectbox(
-                "Chart a scanned NSE stock",
-                chart_symbols,
-                format_func=lambda symbol: symbol.removesuffix(".NS"),
-                key="scanner_chart_ticker",
+        selected_rows = table_event.selection.rows
+        if selected_rows:
+            selected = filtered.iloc[selected_rows[0]]
+            st.session_state["selected_scanner_symbol"] = nse_ticker(
+                str(selected["Symbol"])
             )
-            st_stock_chart_start = datetime.date.today() - datetime.timedelta(days=365)
-            show_stock_chart(
-                chart_ticker,
-                st_stock_chart_start,
-                datetime.date.today(),
-                "1d",
-                f"{chart_ticker} · Daily",
-            )
+
+        chart_ticker = st.session_state.get("selected_scanner_symbol")
+        if chart_ticker:
+            selected_rows = frame[
+                frame["Symbol"].map(lambda symbol: nse_ticker(str(symbol))) == chart_ticker
+            ]
+            selected = selected_rows.iloc[0] if not selected_rows.empty else {}
+            st.markdown(f"#### {chart_ticker} · Live scanner detail")
+            quote = load_live_quote(chart_ticker)
+            if quote:
+                quote_cols = st.columns(5)
+                quote_cols[0].metric("LTP", f"₹{quote['price']:,.2f}")
+                quote_cols[1].metric(
+                    "Day High",
+                    "—" if quote.get("day_high") is None else f"₹{quote['day_high']:,.2f}",
+                )
+                quote_cols[2].metric(
+                    "Day Low",
+                    "—" if quote.get("day_low") is None else f"₹{quote['day_low']:,.2f}",
+                )
+                quote_cols[3].metric(
+                    "Change",
+                    "—" if quote.get("change_pct") is None else f"{quote['change_pct']:+.2f}%",
+                )
+                quote_cols[4].metric(
+                    "Volume",
+                    "—" if quote.get("volume") is None else f"{quote['volume']:,}",
+                )
+                st.caption(f"● {quote['source']} · {quote.get('as_of', 'time unavailable')}")
+            else:
+                st.caption("Live quote unavailable from NSE and Yahoo.")
+
+            live_frame = load_live_daily_history(chart_ticker)
+            if not live_frame.empty:
+                latest = live_frame.iloc[-1]
+                average_volume = float(live_frame["Volume"].tail(20).mean())
+                q1, q2, q3 = st.columns(3)
+                q1.metric("Latest close", f"₹{float(latest['Close']):,.2f}")
+                q2.metric("20-session avg volume", f"{average_volume:,.0f}")
+                q3.metric("Scanner setup", str(selected.get("Setup") or "—"))
+                st.caption(
+                    f"Watchlist setup: {selected.get('Setup') or '—'} · "
+                    f"Scanner RSI: {selected.get('RSI') if pd.notna(selected.get('RSI')) else '—'} · "
+                    f"Watchlist volume: {selected.get('Volume') if pd.notna(selected.get('Volume')) else '—'}"
+                )
+            else:
+                st.warning(f"No current Yahoo Finance setup data returned for {chart_ticker}.")
+
+            chart_column, action_column = st.columns([5, 1])
+            with chart_column:
+                show_stock_chart(
+                    chart_ticker,
+                    datetime.date.today() - datetime.timedelta(days=365),
+                    datetime.date.today(),
+                    "1d",
+                    f"{chart_ticker} · Daily Candles",
+                )
+            with action_column:
+                st.markdown("#### Deep Analyze")
+                if st.button(
+                    "Open full analysis",
+                    key=f"scanner_analyze_{chart_ticker}",
+                    use_container_width=True,
+                ):
+                    st.session_state["_deep_analyze_ticker"] = chart_ticker
+                    st.session_state["_navigate_to_analyzer"] = True
+        elif search and filtered.empty:
+            st.info("No watchlist rows match this search.")
 
 with analyzer_tab:
     col_input, col_timeframe, col_action = st.columns([3, 1, 1])
     with col_input:
-        ticker_input = st.text_input("NSE ticker", placeholder="RELIANCE or RELIANCE.NS")
+        ticker_input = st.text_input(
+            "NSE ticker",
+            placeholder="RELIANCE or RELIANCE.NS",
+            key="analyzer_ticker_input",
+        )
     with col_timeframe:
         analyzer_timeframe = st.selectbox("Chart timeframe", ["5m", "15m", "1h", "1D"], index=3)
     with col_action:
         analyze = st.button("Analyze", type="primary", use_container_width=True)
+    if st.session_state.pop("analyzer_run_requested", False):
+        analyze = True
 
     if analyze:
         ticker = nse_ticker(ticker_input)
@@ -578,20 +938,37 @@ with analyzer_tab:
             st.warning("Enter an NSE ticker.")
         else:
             st.subheader(ticker)
-
-            with st.spinner("Running trader-entry..."):
+            quote = get_live_quote(ticker)
+            if quote:
+                quote_cols = st.columns(5)
+                quote_cols[0].metric("LTP", f"₹{quote['price']:,.2f}")
+                quote_cols[1].metric(
+                    "Day High", "—" if quote.get("day_high") is None else f"₹{quote['day_high']:,.2f}")
+                quote_cols[2].metric(
+                    "Day Low", "—" if quote.get("day_low") is None else f"₹{quote['day_low']:,.2f}")
+                quote_cols[3].metric(
+                    "Change", "—" if quote.get("change_pct") is None else f"{quote['change_pct']:+.2f}%")
+                quote_cols[4].metric(
+                    "Volume", "—" if quote.get("volume") is None else f"{quote['volume']:,}")
+                st.caption(f"● {quote['source']} · {quote.get('as_of', 'time unavailable')}")
+            else:
+                st.caption("Quote unavailable from NSE and Yahoo.")
+            entry_doc = None
+            with st.spinner(f"Running a fresh trader-entry check for {ticker}..."):
                 entry_code, entry_stdout, entry_stderr = run_skill(
-                    "trader-entry", "entry.py",
-                    ["check", ticker, "--json", "--write", "trader/entry.json"],
-                )
+                    "trader-entry", "entry.py", ["check", ticker, "--json"])
+            parsed_entry = parse_json_output(entry_stdout)
+            if (
+                entry_code in (0, 1)
+                and isinstance(parsed_entry, dict)
+                and nse_ticker(parsed_entry.get("symbol", "")) == ticker
+                and not parsed_entry.get("fallback_session")
+            ):
+                entry_doc = parsed_entry
 
-            entry_doc = parse_json_output(entry_stdout)
+            st.markdown("**Fresh Entry Check**")
             if entry_doc is None:
-                entry_doc = json.loads((ROOT / "trader" / "entry.json").read_text(encoding="utf-8")) if (ROOT / "trader" / "entry.json").exists() else None
-
-            st.markdown("**Entry**")
-            if entry_code not in (0, 1) or entry_doc is None:
-                st.error(entry_stderr or entry_stdout or f"Entry check failed with code {entry_code}")
+                st.error(entry_stderr or entry_stdout or f"No fresh entry data returned for {ticker}.")
             else:
                 status = str(entry_doc.get("status", "UNKNOWN")).upper()
                 st.metric("Status", status)
@@ -600,50 +977,61 @@ with analyzer_tab:
 
             entry_price = None
             or_high = or_low = None
-            if entry_doc:
-                entry_price = entry_doc.get("price")
-                orr = entry_doc.get("opening_range") or {}
-                or_high = orr.get("high")
-                or_low = orr.get("low")
-                if entry_price is None:
-                    entry_price = entry_doc.get("level") or or_high
+            if entry_doc and entry_doc.get("status") in ("triggered", "waiting"):
+                trigger = entry_doc.get("trigger") or {}
+                opening_range = entry_doc.get("opening_range") or {}
+                entry_price = trigger.get("price") or entry_doc.get("level")
+                or_high = opening_range.get("high")
+                or_low = opening_range.get("low")
 
-            with st.spinner("Running trader-exit..."):
-                if entry_doc and entry_doc.get("status") == "triggered":
-                    exit_args = ["plan", "--from", "trader/entry.json", "--json", "--write", "trader/plan.json"]
-                elif entry_price:
-                    exit_args = ["plan", "--symbol", ticker, "--entry", str(entry_price), "--json", "--write", "trader/plan.json"]
-                    if or_high is not None and or_low is not None:
-                        exit_args += ["--or-high", str(or_high), "--or-low", str(or_low), "--setup", "orb"]
+            exit_doc = None
+            if entry_doc is not None and entry_price is not None:
+                exit_args = [
+                    "plan", "--symbol", ticker, "--entry", str(entry_price),
+                    "--date", str(entry_doc.get("date") or datetime.date.today()),
+                    "--json",
+                ]
+                if or_high is not None and or_low is not None:
+                    exit_args += [
+                        "--or-high", str(or_high), "--or-low", str(or_low), "--setup", "orb",
+                    ]
                 else:
-                    exit_args = None
-
-                if exit_args:
-                    exit_code, exit_stdout, exit_stderr = run_skill("trader-exit", "exit.py", exit_args)
+                    exit_args += ["--setup", "level"]
+                if entry_doc.get("time"):
+                    exit_args += ["--time", str(entry_doc["time"])]
+                with st.spinner(f"Calculating a fresh trader-exit plan for {ticker}..."):
+                    exit_code, exit_stdout, exit_stderr = run_skill(
+                        "trader-exit", "exit.py", exit_args)
+                parsed_exit = parse_json_output(exit_stdout)
+                if (
+                    exit_code == 0
+                    and isinstance(parsed_exit, dict)
+                    and nse_ticker(parsed_exit.get("symbol", "")) == ticker
+                ):
+                    exit_doc = parsed_exit
                 else:
-                    exit_code, exit_stdout, exit_stderr = 1, "", "Entry facts are unavailable for an exit plan"
-
-            exit_doc = parse_json_output(exit_stdout)
-            st.markdown("**Exit Plan**")
-            if exit_code != 0 or exit_doc is None:
-                st.error(exit_stderr or exit_stdout or "Exit plan could not be created")
+                    st.error(exit_stderr or exit_stdout or "Fresh exit plan is unavailable.")
+            elif entry_doc is not None:
+                st.info("No current entry level or trigger was returned; no exit plan was calculated.")
             else:
+                st.info("Entry data failed for this request; no prior entry or exit plan is reused.")
+
+            st.markdown("**Fresh Exit Plan**")
+            if exit_doc:
                 m1, m2, m3 = st.columns(3)
-                m1.metric("Entry", f"₹{float(exit_doc.get('entry', 0)):,.2f}")
-                m2.metric("Stop", f"₹{float(exit_doc.get('stop', 0)):,.2f}")
-                m3.metric("Target", f"₹{float(exit_doc.get('target', 0)):,.2f}")
+                m1.metric("Entry", f"₹{float(exit_doc['entry']):,.2f}")
+                m2.metric("Stop", f"₹{float(exit_doc['stop']):,.2f}")
+                m3.metric("Target", f"₹{float(exit_doc['target']):,.2f}")
+            else:
+                st.caption("No plan values are displayed because this ticker has no fresh valid plan.")
 
             chart_levels = []
-            chart_entry = exit_doc.get("entry") if exit_doc else entry_price
-            if chart_entry is not None:
-                chart_levels.append(("Entry", float(chart_entry), "#2962ff"))
             if exit_doc:
-                for key, label, color in (
-                    ("stop", "Stop-Loss", "#ef5350"),
-                    ("target", "Target", "#26a69a"),
-                ):
-                    if exit_doc.get(key) is not None:
-                        chart_levels.append((label, float(exit_doc[key]), color))
+                chart_levels = [
+                    ("Entry", float(exit_doc["entry"]), "#2962ff"),
+                    ("Stop-Loss", float(exit_doc["stop"]), "#ef5350"),
+                    ("Target", float(exit_doc["target"]), "#26a69a"),
+                ]
             st.markdown("#### Price Chart")
             chart_interval = {"5m": "5m", "15m": "15m", "1h": "1h", "1D": "1d"}[analyzer_timeframe]
             history_days = {"5m": 7, "15m": 60, "1h": 365, "1d": 365}[chart_interval]
@@ -658,38 +1046,66 @@ with analyzer_tab:
 
             risk_col, news_col = st.columns(2)
             with risk_col:
-                st.markdown("**Risk Check**")
-                with st.spinner("Running trader-risk..."):
-                    if (ROOT / "trader" / "orders.json").exists():
-                        risk_code, risk_stdout, risk_stderr = run_skill(
-                            "trader-risk", "check.py", ["--json", "--no-write"],
-                        )
-                        risk_doc = parse_json_output(risk_stdout)
-                        if risk_code not in (0, 1) or risk_doc is None:
-                            st.error(risk_stderr or risk_stdout or "Risk check failed")
-                        else:
-                            verdicts = risk_doc.get("verdicts") or risk_doc.get("results") or []
-                            if verdicts:
-                                for verdict in verdicts:
-                                    st.success(str(verdict)) if verdict.get("verdict") == "PASS" else st.error(str(verdict))
+                st.markdown("**Fresh Risk Check**")
+                if not exit_doc:
+                    st.info("Risk was not run: this ticker has no fresh exit plan to size.")
+                else:
+                    with tempfile.TemporaryDirectory(prefix="nse-analyzer-") as temp_dir:
+                        temp_plan = Path(temp_dir) / "plan.json"
+                        temp_orders = Path(temp_dir) / "orders.json"
+                        temp_plan.write_text(json.dumps(exit_doc), encoding="utf-8")
+                        try:
+                            portfolio = json.loads(
+                                (ROOT / "trader" / "portfolio.json").read_text(encoding="utf-8"))
+                            cash = float(portfolio.get("cash", 100000))
+                        except (OSError, ValueError, TypeError):
+                            cash = 100000.0
+                        with st.spinner(f"Running fresh sizing and trader-risk validation for {ticker}..."):
+                            size_code, size_stdout, size_stderr = run_skill(
+                                "trader-budget", "size.py",
+                                [
+                                    "--plan", str(temp_plan), "--portfolio", "trader/portfolio.json",
+                                    "--budget", str(cash), "--write", str(temp_orders), "--json",
+                                ],
+                            )
+                            size_doc = parse_json_output(size_stdout)
+                            if size_code != 0 or not isinstance(size_doc, dict) or not size_doc.get("orders"):
+                                st.error(size_stderr or size_stdout or "Fresh position sizing returned no order.")
                             else:
-                                st.json(risk_doc)
-                    else:
-                        st.info("No trader/orders.json exists yet. Create a budget-sized order to run risk validation.")
+                                risk_code, risk_stdout, risk_stderr = run_skill(
+                                    "trader-risk", "check.py",
+                                    [
+                                        "--orders", str(temp_orders), "--portfolio", "trader/portfolio.json",
+                                        "--json", "--no-write",
+                                    ],
+                                )
+                                risk_doc = parse_json_output(risk_stdout)
+                                if risk_code not in (0, 1) or not isinstance(risk_doc, dict):
+                                    st.error(risk_stderr or risk_stdout or "Fresh risk check failed.")
+                                else:
+                                    results = risk_doc.get("results") or []
+                                    for verdict in results:
+                                        verdict_label = verdict.get("verdict", "UNKNOWN")
+                                        label = f"{ticker} · {verdict_label}"
+                                        st.success(label) if verdict_label == "PASS" else st.error(label)
+                                        for reason in verdict.get("reasons") or []:
+                                            st.caption(reason)
+                                    if not results:
+                                        st.json(risk_doc)
 
             with news_col:
                 st.markdown("**Recent News**")
-                with st.spinner("Running trader-news..."):
+                with st.spinner(f"Running trader-news for {ticker}..."):
                     news_code, news_stdout, news_stderr = run_skill(
                         "trader-news", "news.py",
-                        ["--tickers", ticker, "--json", "--no-sec", "--no-moves", "--dry-run", "--hours", "48"],
+                        ["--tickers", ticker, "--json", "--no-sec", "--no-moves", "--dry-run", "--all", "--hours", "48"],
                         timeout=150,
                     )
                     news_doc = parse_json_output(news_stdout)
-                    if news_code not in (0, 1) or news_doc is None:
+                    if news_code not in (0, 1) or not isinstance(news_doc, dict):
                         st.warning(news_stderr or news_stdout or f"No news data available (exit {news_code})")
                     else:
-                        items = news_doc if isinstance(news_doc, list) else news_doc.get("items", [])
+                        items = news_doc.get("items") or []
                         if items:
                             for item in items[:8]:
                                 title = item.get("title", "Untitled")
@@ -700,7 +1116,10 @@ with analyzer_tab:
                                 else:
                                     st.markdown(f"- {title} — _{source}_")
                         else:
-                            st.info("No recent items found.")
+                            st.info("No exact ticker/company-match headlines found.")
+                        if news_doc.get("notes"):
+                            for note in news_doc["notes"]:
+                                st.caption(note)
 
 with analyst_tab:
     st.subheader("NSE Fundamentals & Filings")
