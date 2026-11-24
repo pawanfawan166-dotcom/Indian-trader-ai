@@ -1,0 +1,19 @@
+{
+  "created_by": "trader-entry",
+  "symbol": "TCS.NS",
+  "setup": "orb",
+  "side": "buy",
+  "currency": "INR",
+  "date": "2026-11-24",
+  "status": "no-data",
+  "time": null,
+  "bar_start": null,
+  "bar_index": null,
+  "price": null,
+  "level": null,
+  "interval": "5m",
+  "opening_range": null,
+  "source": "yahoo",
+  "checked_at": "2026-11-24T09:10:31Z",
+  "reason": "Yahoo sent no bars for the opening range"
+}

@@ -1,130 +1,277 @@
-import os
-import shlex
-import zipfile
+import json
 import subprocess
+import sys
+from pathlib import Path
+
+import pandas as pd
 import streamlit as st
-from google import genai
-from google.genai import types
 
-st.set_page_config(page_title="Day-Trader Original Skills (Gemini)", page_icon="⚡", layout="wide")
-st.title("⚡ Day-Trader Original Skills Engine")
-st.caption("Runs your 100% original SKILL.md & Python scripts from zip — Powered by Gemini")
+ROOT = Path(__file__).resolve().parent
+SKILLS = ROOT / "skills"
+WATCHLIST = ROOT / "trader" / "watchlist.json"
 
-# 1. Auto-extract original zip on startup
-ZIP_FILE = "day-trader-skills-install.zip"
-EXTRACT_DIR = "extracted_skills"
+st.set_page_config(page_title="Indian NSE Trading Desk", page_icon="₹", layout="wide")
 
-if not os.path.exists(EXTRACT_DIR):
-    if os.path.exists(ZIP_FILE):
-        with zipfile.ZipFile(ZIP_FILE, "r") as z:
-            z.extractall(EXTRACT_DIR)
-    else:
-        st.error(f"'{ZIP_FILE}' GitHub repo lo kanipinchaledu. Mundu aa zip file ni upload cheyandi.")
-        st.stop()
-
-# Map all 11 original skills from the zip
-ORIGINAL_SKILLS = {
-    "trader-scanner": "scan.py",
-    "trader-entry": "entry.py",
-    "trader-exit": "exit.py",
-    "trader-risk": "check.py",
-    "trader-budget": "size.py",
-    "trader-news": "news.py",
-    "trader-alerts": "alerts.py",
-    "trader-analyst": "facts.py",
-    "trader-broker": "ticket.py",
-    "trader-pelosi": "ptr.py",
-    "trader-timemachine": "timemachine.py",
+st.markdown("""
+<style>
+.block-container {padding-top: 1.5rem; padding-bottom: 2rem; max-width: 1180px;}
+[data-testid="stMetric"] {border: 1px solid rgba(128,128,128,.18); border-radius: 8px; padding: 10px;}
+[data-testid="stDataFrame"] {border: 1px solid rgba(128,128,128,.18); border-radius: 8px;}
+.stButton > button {width: 100%; border-radius: 6px; min-height: 42px;}
+@media (max-width: 640px) {
+  .block-container {padding-left: .75rem; padding-right: .75rem;}
+  h1 {font-size: 1.7rem !important;}
 }
+</style>
+""", unsafe_allow_html=True)
 
-api_key = st.secrets.get("GEMINI_API_KEY", "")
-if not api_key:
-    st.error("Streamlit Secrets lo GEMINI_API_KEY add cheyandi.")
-    st.stop()
+st.title("Indian NSE Trading Desk")
+st.caption("NSE · INR (₹) · IST 9:15 AM–3:30 PM")
 
-client = genai.Client(api_key=api_key)
 
-# Tool 1: Read original SKILL.md (exact Claude Code behavior)
-def read_skill_md(skill_name: str) -> str:
-    """Reads the original SKILL.md file for a skill to learn its exact CLI commands, flags, and rules."""
-    path = os.path.join(EXTRACT_DIR, skill_name, "SKILL.md")
-    if not os.path.exists(path):
-        return f"Error: {path} not found. Available skills: {list(ORIGINAL_SKILLS.keys())}"
-    with open(path, "r", encoding="utf-8", errors="ignore") as f:
-        return f.read()
+def nse_ticker(value: str) -> str:
+    ticker = value.strip().upper()
+    if not ticker:
+        return ""
+    ticker = ticker.replace(".NS", "")
+    return f"{ticker}.NS"
 
-# Tool 2: Execute original .py script with CLI arguments
-def run_original_script(skill_name: str, cli_args: str = "--help") -> str:
-    """Executes the original Python script from the zip with the given CLI arguments and returns stdout/stderr."""
-    if skill_name not in ORIGINAL_SKILLS:
-        return f"Error: Unknown skill '{skill_name}'. Available: {list(ORIGINAL_SKILLS.keys())}"
 
-    script_file = ORIGINAL_SKILLS[skill_name]
-    script_path = os.path.join(EXTRACT_DIR, skill_name, script_file)
-    if not os.path.exists(script_path):
-        return f"Error: Script not found at {script_path}"
-
-    cmd = ["python", script_path] + (shlex.split(cli_args) if cli_args.strip() else [])
+def run_skill(skill_name: str, script_name: str, args: list[str], timeout: int = 120):
+    script = SKILLS / skill_name / script_name
+    if not script.exists():
+        return 127, "", f"Skill script not found: {script}"
+    command = [sys.executable, str(script), *args]
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-        out = res.stdout.strip()
-        err = res.stderr.strip()
-        return f"COMMAND: {' '.join(cmd)}\nEXIT CODE: {res.returncode}\n\nSTDOUT:\n{out[:8000]}\n\nSTDERR:\n{err[:2000]}"
-    except Exception as e:
-        return f"Execution error: {str(e)}"
+        result = subprocess.run(
+            command,
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        return result.returncode, result.stdout.strip(), result.stderr.strip()
+    except subprocess.TimeoutExpired:
+        return 124, "", f"Timed out after {timeout} seconds"
+    except Exception as exc:
+        return 1, "", str(exc)
 
-SYSTEM_INSTRUCTION = f"""
-You are an autonomous trading agent (replacing Claude Code) that executes the user's ORIGINAL Python skills located in '{EXTRACT_DIR}'.
-Available skills: {list(ORIGINAL_SKILLS.keys())}.
 
-Strict Workflow (Exact Claude Code Process):
-1. Whenever the user asks to run a task, FIRST call `read_skill_md(skill_name)` to read the exact instructions and CLI syntax of that original skill.
-2. Then call `run_original_script(skill_name, cli_args)` using the exact CLI flags documented in SKILL.md (or `--help` if needed).
-3. If the user asks about an Indian NSE stock (e.g., RELIANCE, SBIN, TCS), pass the NSE ticker format (e.g., RELIANCE.NS, SBIN.NS) to the original script.
-4. Never make up numbers. Base your entire answer strictly on the actual script output.
-"""
+def parse_json_output(text: str):
+    try:
+        start = text.find("{")
+        if start >= 0:
+            return json.loads(text[start:])
+        start = text.find("[")
+        if start >= 0:
+            return json.loads(text[start:])
+    except json.JSONDecodeError:
+        pass
+    return None
 
-with st.sidebar:
-    st.header("📂 Loaded Original Skills")
-    for s in ORIGINAL_SKILLS:
-        exists = os.path.exists(os.path.join(EXTRACT_DIR, s, ORIGINAL_SKILLS[s]))
-        st.write(f"{'✅' if exists else '❌'} `{s}/{ORIGINAL_SKILLS[s]}`")
-    if st.button("🗑️ Clear Chat"):
-        st.session_state.messages = []
-        st.rerun()
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+def load_watchlist():
+    if not WATCHLIST.exists():
+        return {}, pd.DataFrame()
+    try:
+        doc = json.loads(WATCHLIST.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return {"error": str(exc)}, pd.DataFrame()
 
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+    hits = doc.get("hits", [])
+    rows = []
+    for hit in hits:
+        setups = hit.get("setups") or hit.get("setup") or []
+        if isinstance(setups, str):
+            setups = [setups]
+        rows.append({
+            "Symbol": hit.get("symbol", ""),
+            "Price (₹)": hit.get("price"),
+            "RSI": hit.get("rsi"),
+            "Setup": ", ".join(setups),
+            "Volume": hit.get("volume"),
+            "Close Date": hit.get("close_date", ""),
+        })
+    frame = pd.DataFrame(rows)
+    return doc, frame
 
-user_prompt = st.chat_input("Example: 'trader-entry run chesi RELIANCE.NS check cheyyi' or 'trader-scanner run cheyyi'")
 
-if user_prompt:
-    st.session_state.messages.append({"role": "user", "content": user_prompt})
-    with st.chat_message("user"):
-        st.markdown(user_prompt)
+def format_watchlist(frame: pd.DataFrame):
+    if frame.empty:
+        return frame
+    return frame
 
-    with st.chat_message("assistant"):
-        with st.spinner("Original SKILL.md chadhivi script run chesthundi..."):
-            try:
-                response = client.models.generate_content(
-                    model="gemini-3.8-flash",
-                    contents=user_prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_INSTRUCTION,
-                        tools=[read_skill_md, run_original_script],
-                        automatic_function_calling=types.AutomaticFunctionCallingConfig(
-                            disable=False,
-                            maximum_remote_calls=8,
-                        ),
-                    ),
+
+scanner_tab, analyzer_tab = st.tabs(["NSE Scanner", "Quick Stock Analyzer"])
+
+with scanner_tab:
+    col1, col2 = st.columns(2)
+    with col1:
+        daily_clicked = st.button("Pre-Market · Daily", use_container_width=True)
+    with col2:
+        orb_clicked = st.button("Live · Opening Range", use_container_width=True)
+
+    if daily_clicked or orb_clicked:
+        mode = "daily" if daily_clicked else "orb"
+        label = "pre-market daily scan" if mode == "daily" else "opening-range breakout scan"
+        with st.spinner(f"Running {label}..."):
+            code, stdout, stderr = run_skill(
+                "trader-scanner",
+                "scan.py",
+                [mode, "--json", "--out", "trader/watchlist.json"],
+                timeout=180,
+            )
+        if code not in (0, 1):
+            st.error(stderr or stdout or f"Scanner exited with code {code}")
+        else:
+            result = parse_json_output(stdout)
+            if result:
+                st.success(f"Scanner completed: {result.get('count', result.get('scanned', 0))} scanned, {len(result.get('hits', []))} hits")
+            elif stdout:
+                st.info(stdout)
+
+    doc, frame = load_watchlist()
+    if isinstance(doc, dict) and doc.get("error"):
+        st.error(f"Could not read watchlist: {doc['error']}")
+    elif frame.empty:
+        st.info("No watchlist data yet. Run a scanner mode above.")
+    else:
+        meta1, meta2, meta3 = st.columns(3)
+        meta1.metric("Mode", str(doc.get("mode", "—")).upper())
+        meta2.metric("As of", str(doc.get("as_of", "—")))
+        meta3.metric("Watchlist", len(frame))
+
+        search = st.text_input("Search symbols or setup", key="watchlist_search")
+        filtered = frame
+        if search:
+            needle = search.casefold()
+            mask = filtered.astype(str).apply(lambda column: column.str.casefold().str.contains(needle, regex=False)).any(axis=1)
+            filtered = filtered[mask]
+
+        st.dataframe(
+            format_watchlist(filtered),
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Price (₹)": st.column_config.NumberColumn(format="₹%.2f"),
+                "RSI": st.column_config.NumberColumn(format="%.1f"),
+                "Volume": st.column_config.NumberColumn(format="%,d"),
+            },
+        )
+
+with analyzer_tab:
+    col_input, col_action = st.columns([3, 1])
+    with col_input:
+        ticker_input = st.text_input("NSE ticker", placeholder="RELIANCE or RELIANCE.NS")
+    with col_action:
+        analyze = st.button("Analyze", type="primary", use_container_width=True)
+
+    if analyze:
+        ticker = nse_ticker(ticker_input)
+        if not ticker:
+            st.warning("Enter an NSE ticker.")
+        else:
+            st.subheader(ticker)
+
+            with st.spinner("Running trader-entry..."):
+                entry_code, entry_stdout, entry_stderr = run_skill(
+                    "trader-entry", "entry.py",
+                    ["check", ticker, "--json", "--write", "trader/entry.json"],
                 )
-                reply = response.text or "No response generated."
-            except Exception as e:
-                reply = f"Error: {str(e)}"
 
-            st.markdown(reply)
-            st.session_state.messages.append({"role": "assistant", "content": reply})
+            entry_doc = parse_json_output(entry_stdout)
+            if entry_doc is None:
+                entry_doc = json.loads((ROOT / "trader" / "entry.json").read_text(encoding="utf-8")) if (ROOT / "trader" / "entry.json").exists() else None
+
+            entry_col, exit_col = st.columns(2)
+            with entry_col:
+                st.markdown("**Entry**")
+                if entry_code not in (0, 1) or entry_doc is None:
+                    st.error(entry_stderr or entry_stdout or f"Entry check failed with code {entry_code}")
+                else:
+                    status = str(entry_doc.get("status", "UNKNOWN")).upper()
+                    st.metric("Status", status)
+                    if entry_doc.get("reason"):
+                        st.caption(entry_doc["reason"])
+
+            entry_price = None
+            or_high = or_low = None
+            if entry_doc:
+                entry_price = entry_doc.get("price")
+                orr = entry_doc.get("opening_range") or {}
+                or_high = orr.get("high")
+                or_low = orr.get("low")
+                if entry_price is None:
+                    entry_price = entry_doc.get("level") or or_high
+
+            with st.spinner("Running trader-exit..."):
+                if entry_doc and entry_doc.get("status") == "triggered":
+                    exit_args = ["plan", "--from", "trader/entry.json", "--json", "--write", "trader/plan.json"]
+                elif entry_price:
+                    exit_args = ["plan", "--symbol", ticker, "--entry", str(entry_price), "--json", "--write", "trader/plan.json"]
+                    if or_high is not None and or_low is not None:
+                        exit_args += ["--or-high", str(or_high), "--or-low", str(or_low), "--setup", "orb"]
+                else:
+                    exit_args = None
+
+                if exit_args:
+                    exit_code, exit_stdout, exit_stderr = run_skill("trader-exit", "exit.py", exit_args)
+                else:
+                    exit_code, exit_stdout, exit_stderr = 1, "", "Entry facts are unavailable for an exit plan"
+
+            exit_doc = parse_json_output(exit_stdout)
+            with exit_col:
+                st.markdown("**Exit Plan**")
+                if exit_code != 0 or exit_doc is None:
+                    st.error(exit_stderr or exit_stdout or "Exit plan could not be created")
+                else:
+                    m1, m2, m3 = st.columns(3)
+                    m1.metric("Entry", f"₹{float(exit_doc.get('entry', 0)):,.2f}")
+                    m2.metric("Stop", f"₹{float(exit_doc.get('stop', 0)):,.2f}")
+                    m3.metric("Target", f"₹{float(exit_doc.get('target', 0)):,.2f}")
+
+            risk_col, news_col = st.columns(2)
+            with risk_col:
+                st.markdown("**Risk Check**")
+                with st.spinner("Running trader-risk..."):
+                    if (ROOT / "trader" / "orders.json").exists():
+                        risk_code, risk_stdout, risk_stderr = run_skill(
+                            "trader-risk", "check.py", ["--json", "--no-write"],
+                        )
+                        risk_doc = parse_json_output(risk_stdout)
+                        if risk_code not in (0, 1) or risk_doc is None:
+                            st.error(risk_stderr or risk_stdout or "Risk check failed")
+                        else:
+                            verdicts = risk_doc.get("verdicts") or risk_doc.get("results") or []
+                            if verdicts:
+                                for verdict in verdicts:
+                                    st.success(str(verdict)) if verdict.get("verdict") == "PASS" else st.error(str(verdict))
+                            else:
+                                st.json(risk_doc)
+                    else:
+                        st.info("No trader/orders.json exists yet. Create a budget-sized order to run risk validation.")
+
+            with news_col:
+                st.markdown("**Recent News**")
+                with st.spinner("Running trader-news..."):
+                    news_code, news_stdout, news_stderr = run_skill(
+                        "trader-news", "news.py",
+                        ["--tickers", ticker, "--json", "--no-sec", "--no-moves", "--dry-run", "--hours", "48"],
+                        timeout=150,
+                    )
+                    news_doc = parse_json_output(news_stdout)
+                    if news_code not in (0, 1) or news_doc is None:
+                        st.warning(news_stderr or news_stdout or f"No news data available (exit {news_code})")
+                    else:
+                        items = news_doc if isinstance(news_doc, list) else news_doc.get("items", [])
+                        if items:
+                            for item in items[:8]:
+                                title = item.get("title", "Untitled")
+                                link = item.get("link")
+                                source = item.get("source", "Source")
+                                if link:
+                                    st.markdown(f"- [{title}]({link}) — _{source}_")
+                                else:
+                                    st.markdown(f"- {title} — _{source}_")
+                        else:
+                            st.info("No recent items found.")

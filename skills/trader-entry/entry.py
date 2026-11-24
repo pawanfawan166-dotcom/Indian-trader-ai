@@ -41,6 +41,8 @@ on a simulated clock and replays the day without sleeping.
 Data: Yahoo's free chart JSON (unofficial, can lag, bars not single trades)
   https://query2.finance.yahoo.com/v8/finance/chart/RELIANCE.NS?range=1d&interval=5m
   falls back to query1 on HTTP 429 or 5xx; a 429 gets one retry after a pause.
+    An ORB with no opening-range bars retries with enough history for the last
+    completed session and labels that session date; it is not a current-day signal.
   --offline PATH reads a saved chart JSON (.json or .json.gz) instead, or
   PATH/<TICKER>.NS.json when PATH is a folder. Without --now, an offline file is
   read as of its own time (meta.regularMarketTime).
@@ -488,6 +490,64 @@ def evaluate(chart, now_utc, setup="orb", or_minutes=15, interval="5m", level=No
     return res
 
 
+def latest_completed_session(chart, before_day, interval, or_minutes):
+    """Newest prior session with every opening-range bar present."""
+    step = INTERVALS[interval]
+    n_or = or_minutes * 60 // step
+    by_day = {}
+    for bar in chart["bars"]:
+        if bar["t"] % step:
+            continue
+        et = to_ist(utc_of(bar["t"]))
+        if et.date() >= before_day:
+            continue
+        hours = session(et.date())
+        if not hours:
+            continue
+        opens, closes = hours
+        start = datetime.datetime.combine(et.date(), opens)
+        end = datetime.datetime.combine(et.date(), closes)
+        if not start <= et < end:
+            continue
+        slot = int((et - start).total_seconds()) // step
+        if slot < n_or:
+            by_day.setdefault(et.date(), set()).add(slot)
+    complete = [day for day, slots in by_day.items() if len(slots) == n_or]
+    return max(complete) if complete else None
+
+
+def evaluate_with_fallback(chart, now_utc, opts, history_loader=None):
+    """Evaluate today, falling back to the latest prior complete ORB session."""
+    res = evaluate(chart, now_utc, **opts)
+    if opts.get("setup", "orb") != "orb":
+        return res
+
+    local = to_ist(now_utc)
+    day = local.date()
+    hours = session(day)
+    should_fallback = hours is None
+    if hours:
+        range_end = datetime.datetime.combine(day, hours[0]) + datetime.timedelta(
+            minutes=opts.get("or_minutes", 15))
+        should_fallback = (local >= range_end and res["status"] == "no-data"
+                           and not res.get("opening_range"))
+    if not should_fallback:
+        return res
+
+    history = history_loader() if history_loader else chart
+    session_day = latest_completed_session(
+        history, day, opts.get("interval", "5m"), opts.get("or_minutes", 15))
+    if session_day is None:
+        return res
+
+    session_close = datetime.datetime.combine(session_day, CLOSE)
+    replay_now = ist_to_utc(session_close)
+    fallback = evaluate(history, replay_now, **opts)
+    fallback["fallback_session"] = session_day.isoformat()
+    fallback["checked_at"] = local.strftime("%Y-%m-%d %H:%M:%S")
+    return fallback
+
+
 def public(res):
     """The result without the internal bar list, ready for JSON."""
     return {k: v for k, v in res.items() if not k.startswith("_")}
@@ -503,7 +563,8 @@ def entry_doc(res, now_utc):
             "bar_index": t.get("bar_index"), "price": t.get("price"), "level": res.get("level"),
             "interval": res["interval"],
             "opening_range": {"high": orr["high"], "low": orr["low"], "minutes": orr["minutes"]} if orr else None,
-            "source": "yahoo", "checked_at": iso(now_utc), "reason": res.get("reason")}
+            "source": "yahoo", "checked_at": iso(now_utc), "fallback_session": res.get("fallback_session"),
+            "reason": res.get("reason")}
 
 
 def write_json(path, doc):
@@ -537,6 +598,9 @@ def describe(res):
     if res.get("data_time") and res["data_time"] <= res["now"] and res["data_time"][:10] == res["date"]:
         head += ", data to %s" % res["data_time"][11:]
     out = [head]
+    if res.get("fallback_session"):
+        out.append("Using most recent completed session: %s (checked %s IST). Historical data, not a current-day signal." % (
+            res["fallback_session"], res["checked_at"]))
     orr = res.get("opening_range")
     if orr:
         start = datetime.datetime.strptime(res["opens"], "%H:%M")
@@ -558,12 +622,15 @@ def describe(res):
                            res["minutes_since"], res["last"]["close"], res["last"]["bar_start"]))
         if res.get("data_note"):
             out.append(res["data_note"] + ".")
-        if res.get("minutes_since", 0) > step:
+        if res.get("fallback_session"):
+            out.append("This was a historical trigger; nothing was placed.")
+        elif res.get("minutes_since", 0) > step:
             out.append("Nothing was placed.")
         else:
             out.append("This is the moment to get in, if you take the trade. Nothing was placed.")
-        out.append("Next: set the stop and target BEFORE you buy: /trader-exit "
-                   "(exit.py plan --from trader/entry.json).")
+        if not res.get("fallback_session"):
+            out.append("Next: set the stop and target BEFORE you buy: /trader-exit "
+                       "(exit.py plan --from trader/entry.json).")
     else:
         out.append("%s  %s." % (label, res["reason"]))
         f = res.get("forming")
@@ -624,7 +691,8 @@ class SimClock(object):
         self.t += datetime.timedelta(seconds=max(1, int(round(seconds))))
 
 
-def watch_loop(provider, clock, sleep, emit, opts, every=30, until=None, max_errors=5, on_trigger=None):
+def watch_loop(provider, clock, sleep, emit, opts, every=30, until=None, max_errors=5, on_trigger=None,
+               history_provider=None):
     """Poll bar by bar until a trigger (0), expiry, the close or --until (1).
     provider(now_utc) -> chart, clock() -> naive UTC, sleep(seconds), emit(line).
     It sleeps in steps of at most `every` seconds and re-reads the clock each time,
@@ -641,6 +709,16 @@ def watch_loop(provider, clock, sleep, emit, opts, every=30, until=None, max_err
         day = local.date()
         s = session(day)
         if not s:
+            if opts.get("setup", "orb") == "orb" and history_provider:
+                try:
+                    chart = provider(now)
+                    res = evaluate_with_fallback(chart, now, opts, lambda: history_provider(now))
+                except EntryError:
+                    res = None
+                if res and res.get("fallback_session"):
+                    for line in describe(res):
+                        emit(line)
+                    return 1, res
             emit("%s: market closed today (%s). Nothing to watch." % (day.isoformat(), trading_day(day)[1]))
             return 1, None
         open_dt = datetime.datetime.combine(day, s[0])
@@ -664,13 +742,16 @@ def watch_loop(provider, clock, sleep, emit, opts, every=30, until=None, max_err
                 return 1, None
             next_fetch = now + datetime.timedelta(seconds=every)
             continue
-        res = evaluate(chart, now, **opts)
+        res = evaluate_with_fallback(
+            chart, now, opts,
+            (lambda: history_provider(now)) if history_provider else None)
         bars = res["_bars"]
         lines = describe(res)
         fresh = first
         if first:
             emit(lines[0])
-            if len(lines) > 1 and lines[1].startswith("Opening range"):
+            if len(lines) > 1 and (lines[1].startswith("Opening range")
+                                   or lines[1].startswith("Using most recent completed session")):
                 emit(lines[1])
             if bars and not res.get("trigger"):
                 emit(bar_line(bars[-1], res))
@@ -683,12 +764,14 @@ def watch_loop(provider, clock, sleep, emit, opts, every=30, until=None, max_err
                     printed = b["slot"]
         if res["status"] == "triggered":
             for line in lines[1:]:
-                if line.startswith("Opening range") or (line.startswith("TRIGGERED") and not fresh):
+                if (line.startswith("Opening range")
+                        or (fresh and line.startswith("Using most recent completed session"))
+                        or (line.startswith("TRIGGERED") and not fresh)):
                     continue
                 emit(line)
-            if on_trigger:
+            if on_trigger and not res.get("fallback_session"):
                 on_trigger(res, now)
-            return 0, res
+            return (1 if res.get("fallback_session") else 0), res
         if res["status"] == "expired" or local >= close_dt:
             emit("EXPIRED  %s." % (res["reason"] or "the market closed without a trigger"))
             return 1, res
@@ -736,12 +819,20 @@ def _load(a, sym, now):
     return get_chart(sym, a.interval, to_ist(now).date(), a.offline, real_today), now
 
 
+def _history_chart(a, sym, now, real_today, current_chart):
+    if a.offline:
+        return current_chart
+    day = to_ist(now).date()
+    return get_chart(sym, a.interval, day - datetime.timedelta(days=1), today=real_today)
+
+
 def cmd_check(a):
     cfg = read_config(a.config)
     opts = _opts(a, cfg)
     sym = yahoo_symbol(a.symbol)
     chart, now = _load(a, sym, parse_now(a.now) if a.now else None)
-    res = evaluate(chart, now, **opts)
+    res = evaluate_with_fallback(
+        chart, now, opts, lambda: _history_chart(a, sym, now, to_ist(utc_now()).date(), chart))
     if a.write:
         write_json(a.write, entry_doc(res, now))
     if a.json:
@@ -773,6 +864,11 @@ def cmd_watch(a):
     def provider(now):
         return get_chart(sym, a.interval, to_ist(now).date(), a.offline, real_today)
 
+    def history_provider(now):
+        if a.offline:
+            return provider(now)
+        return _history_chart(a, sym, now, real_today, None)
+
     until = None
     if a.until:
         t = parse_hhmm(a.until, "--until")
@@ -786,7 +882,7 @@ def cmd_watch(a):
         print(line, flush=True)
 
     code, _ = watch_loop(provider, now_fn, sleep_fn, emit, opts, every=a.every, until=until,
-                         on_trigger=on_trigger)
+                         on_trigger=on_trigger, history_provider=history_provider)
     return code
 
 
@@ -818,7 +914,8 @@ def cmd_watchlist(a):
             if i and not a.offline:
                 _sleep(PAUSE)
             chart, when = _load(a, sym, now)
-            rows.append((sym, evaluate(chart, when, **o), None))
+            rows.append((sym, evaluate_with_fallback(
+                chart, when, o, lambda: _history_chart(a, sym, when, to_ist(utc_now()).date(), chart)), None))
         except EntryError as e:
             rows.append((sym, None, str(e)))
     if a.json:
@@ -837,6 +934,9 @@ def cmd_watchlist(a):
                 ("₹%.2f" % r["level"]) if r.get("level") is not None else "-",
                 ("₹%.2f" % last["close"]) if last else "-",
                 ("%+.2f%%" % last["vs_level_pct"]) if last.get("vs_level_pct") is not None else "-"))
+            if r.get("fallback_session"):
+                print("       Using most recent completed session: %s (historical, not a current-day signal)." %
+                      r["fallback_session"])
         n = sum(1 for _, r, _ in rows if r and r["status"] == "triggered")
         print("%d of %d triggered. Pick one, then: entry.py check <TICKER> --write, and /trader-exit." % (n, len(rows)))
         print("Free Yahoo bars, unofficial and can lag. Nothing was placed.")
