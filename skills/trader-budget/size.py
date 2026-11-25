@@ -23,9 +23,8 @@ How many shares. Whole shares only: the preserved Alpaca-shaped paper ticket tak
                      (and no more than the cash in trader/portfolio.json, if you have one)
 
 The entry it sizes at: a limit order's limit price; for a market order the
-plan's entry, or the price in trader/prices.json if that is fresh (under 15
-minutes old) and higher, because a price that ran up since the plan means a
-bigger loss at the same stop. Zero shares (the stop is too far away for your
+plan's entry, or a fresh adverse price move from trader/prices.json. Zero
+shares (the stop is too far away for your
 max loss) is a plain refusal: no order is written. So is a reward:risk under
 min_reward_risk (the price ran toward the target since the plan).
 
@@ -315,7 +314,7 @@ def size_trade(plan, cfg, budget=None, limit=None, price=None, cash=None, today=
     """Pure function: one plan + your rules -> the sizing (a dict). qty may be 0.
 
     limit  the limit price for a limit order (None = market)
-    price  a FRESH latest price; a market order is sized at the higher of it and the plan's entry
+    price  a FRESH latest price; adverse moves from the plan entry size the order more conservatively
     cash   the cash in trader/portfolio.json, if there is one
     today  IST date (YYYY-MM-DD); a plan for another day is refused"""
     c = dict(DEFAULTS)
@@ -326,8 +325,11 @@ def size_trade(plan, cfg, budget=None, limit=None, price=None, cash=None, today=
     if not sym:
         raise SizeError("the plan has no symbol (run trader-exit)")
     side = str(plan.get("side") or "buy").strip().lower()
-    if side != "buy":
-        raise SizeError("this pack sizes long (buy) day trades only; the plan says %r" % side)
+    if side not in ("buy", "sell"):
+        raise SizeError("the plan side must be buy or sell, got %r" % side)
+    long = side == "buy"
+    if not long and not c.get("allow_short"):
+        raise SizeError("short selling is off; set allow_short only for an explicitly authorized paper short")
     if today and plan.get("date") and str(plan["date"]) != today:
         raise SizeError("the plan is for %s and today is %s in IST: make a new plan with trader-exit"
                         % (plan["date"], today))
@@ -349,19 +351,22 @@ def size_trade(plan, cfg, budget=None, limit=None, price=None, cash=None, today=
 
     if limit is not None:
         ref, ref_from = round_cent(limit), "limit"
-    elif price is not None and round_cent(price) > round_cent(entry_plan):
+    elif price is not None and (
+        (long and round_cent(price) > round_cent(entry_plan))
+        or (not long and round_cent(price) < round_cent(entry_plan))
+    ):
         ref, ref_from = round_cent(price), "price"
     else:
         ref, ref_from = round_cent(entry_plan), "plan"
     stop, target = round_cent(stop), round_cent(target)
-    if stop >= ref:
-        raise SizeError("the stop ₹%s is not below the entry ₹%s; a long trade needs its stop underneath"
-                        % (_price(stop), _price(ref)))
-    if target <= ref:
-        raise SizeError("the target ₹%s is not above the entry ₹%s: the move has already happened. "
-                        "Skip it or make a new plan with trader-exit" % (_price(target), _price(ref)))
-    risk_c = int(round((ref - stop) * 100))
-    reward_c = int(round((target - ref) * 100))
+    if (long and stop >= ref) or (not long and stop <= ref):
+        raise SizeError("the stop ₹%s must be %s the entry ₹%s for a %s trade"
+                        % (_price(stop), "below" if long else "above", _price(ref), side))
+    if (long and target <= ref) or (not long and target >= ref):
+        raise SizeError("the target ₹%s must be %s the entry ₹%s for a %s trade"
+                        % (_price(target), "above" if long else "below", _price(ref), side))
+    risk_c = int(round(abs(ref - stop) * 100))
+    reward_c = int(round(abs(target - ref) * 100))
     risk = risk_c / 100.0
 
     cash_buffer = round(budget * buf_pct / 100.0, 2)
@@ -412,7 +417,7 @@ def size_trade(plan, cfg, budget=None, limit=None, price=None, cash=None, today=
         refusal = ("%d share%s of %s is %s, under your %s minimum order. No order."
                    % (qty, "" if qty == 1 else "s", sym, money(cost), money(c.get("min_order_inr") or c.get("min_order_usd") or 0)))
     return {
-        "symbol": sym, "side": "buy", "setup": plan.get("setup", ""), "date": plan.get("date"),
+        "symbol": sym, "side": side, "setup": plan.get("setup", ""), "date": plan.get("date"),
         "entry_time": plan.get("entry_time", ""), "entry_plan": round_cent(entry_plan),
         "entry": ref, "entry_from": ref_from, "stop": stop, "target": target,
         "risk_per_share": risk, "reward_risk": round(reward_c / float(risk_c), 2),
@@ -428,13 +433,14 @@ def bracket_order(s):
     """The one proposed paper ticket, in the existing Alpaca-shaped schema."""
     if s["refusal"] or s["qty"] <= 0:
         return None
-    o = {"symbol": s["symbol"], "side": "buy", "qty": str(int(s["qty"])), "type": s["order_type"],
+    o = {"symbol": s["symbol"], "side": s.get("side", "buy"), "qty": str(int(s["qty"])), "type": s["order_type"],
          "time_in_force": "day"}
     if s["order_type"] == "limit":
         o["limit_price"] = _price(s["entry"])
     setup = SETUP_WORDS.get(s["setup"], s["setup"] or "day trade")
-    why = ("%s on %s: %d shares, bound by your %s (%d x ₹%s = %s at the stop)"
-           % (setup, s["symbol"], s["qty"], {"max loss": "%s max loss per trade" % money(s["max_loss_per_trade_inr"] or 0),
+    direction = "long" if s.get("side", "buy") == "buy" else "paper short"
+    why = ("%s %s on %s: %d shares, bound by your %s (%d x ₹%s = %s at the stop)"
+           % (direction, setup, s["symbol"], s["qty"], {"max loss": "%s max loss per trade" % money(s["max_loss_per_trade_inr"] or 0),
                                              "position cap": "position cap", "max order": "max order",
                                              "cash": "cash after the buffer"}[s["bound_by"]],
               s["qty"], _price(s["risk_per_share"]), money(s["max_loss"])))

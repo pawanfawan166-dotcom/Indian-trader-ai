@@ -184,6 +184,184 @@ def _candidate_volume(row):
     )
 
 
+def _rsi_value(closes, period=14):
+    values = []
+    for value in closes:
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(numeric):
+            values.append(numeric)
+    if len(values) <= period:
+        return None
+    changes = [values[index] - values[index - 1] for index in range(1, len(values))]
+    gains = [max(change, 0.0) for change in changes]
+    losses = [max(-change, 0.0) for change in changes]
+    average_gain = sum(gains[:period]) / period
+    average_loss = sum(losses[:period]) / period
+    for gain, loss in zip(gains[period:], losses[period:]):
+        average_gain = (average_gain * (period - 1) + gain) / period
+        average_loss = (average_loss * (period - 1) + loss) / period
+    if average_loss == 0:
+        return 100.0 if average_gain else 50.0
+    return 100 - 100 / (1 + average_gain / average_loss)
+
+
+def _intraday_features(frame, average_daily_volume=None):
+    """Extract the latest session's intraday indicators and directional setup."""
+    if frame is None or frame.empty:
+        return None
+    frame = frame.copy()
+    if isinstance(frame.columns, pd.MultiIndex):
+        frame.columns = frame.columns.get_level_values(0)
+    frame.columns = [str(column).title() for column in frame.columns]
+    required = ("Open", "High", "Low", "Close", "Volume")
+    if any(column not in frame.columns for column in required):
+        return None
+    index = pd.DatetimeIndex(pd.to_datetime(frame.index, errors="coerce"))
+    valid_index = ~index.isna()
+    frame = frame.loc[valid_index]
+    index = index[valid_index]
+    if frame.empty:
+        return None
+    if index.tz is None:
+        index = index.tz_localize("Asia/Kolkata")
+    else:
+        index = index.tz_convert("Asia/Kolkata")
+    frame.index = index
+    for column in required:
+        frame[column] = pd.to_numeric(frame[column], errors="coerce")
+    frame = frame.dropna(subset=["High", "Low", "Close", "Volume"])
+    frame = frame[(frame.index.time >= datetime.time(9, 15)) & (frame.index.time < datetime.time(15, 30))]
+    if frame.empty:
+        return None
+
+    daily_volumes = frame.groupby(frame.index.date)["Volume"].sum()
+    session_day = max(daily_volumes.index)
+    session = frame[frame.index.date == session_day]
+    closes = session["Close"]
+    volumes = session["Volume"].clip(lower=0)
+    price = float(closes.iloc[-1])
+    intraday_volume = float(volumes.sum())
+    avg_volume = _numeric_volume(average_daily_volume)
+    if avg_volume is None and not daily_volumes.empty:
+        avg_volume = _numeric_volume(daily_volumes.tail(20).mean())
+    if avg_volume is None:
+        avg_volume = _numeric_volume(volumes.mean())
+
+    typical = (session["High"] + session["Low"] + session["Close"]) / 3
+    total_volume = float(volumes.sum())
+    vwap = float((typical * volumes).sum() / total_volume) if total_volume > 0 else None
+    ema9 = float(closes.ewm(span=9, adjust=False).mean().iloc[-1])
+    ema20 = float(closes.ewm(span=20, adjust=False).mean().iloc[-1]) if len(closes) >= 20 else None
+    rsi = _rsi_value(closes.tolist())
+    opening_bars = session.iloc[:3]
+    if len(opening_bars) < 3 or ema20 is None or vwap is None or not avg_volume:
+        return None
+    opening_high = float(opening_bars["High"].max())
+    opening_low = float(opening_bars["Low"].min())
+    previous_closes = closes.iloc[:-1].tail(20)
+    momentum_high = float(previous_closes.max()) if not previous_closes.empty else opening_high
+    momentum_low = float(previous_closes.min()) if not previous_closes.empty else opening_low
+    long_breakout = price > opening_high or price > momentum_high
+    short_breakdown = price < opening_low or price < momentum_low
+    bullish = price > vwap and ema9 > ema20 and long_breakout
+    bearish = price < vwap and ema9 < ema20 and short_breakdown
+    if not bullish and not bearish:
+        return None
+    direction = "LONG" if bullish else "SHORT"
+    relative_volume = intraday_volume / avg_volume if avg_volume else 0
+    score = 55 + min(20, max(0, (relative_volume - 1) * 10))
+    if rsi is not None and ((direction == "LONG" and 50 <= rsi <= 75)
+                            or (direction == "SHORT" and 25 <= rsi <= 50)):
+        score += 10
+    broke_opening_range = (
+        price > opening_high if direction == "LONG" else price < opening_low
+    )
+    if broke_opening_range:
+        score += 15
+    signal_time = session.index[-1] + datetime.timedelta(minutes=5)
+    return {
+        "price": price,
+        "volume": intraday_volume,
+        "average_daily_volume": avg_volume,
+        "liquid": avg_volume >= 100000,
+        "rsi": rsi,
+        "vwap": vwap,
+        "ema9": ema9,
+        "ema20": ema20,
+        "opening_range_high": opening_high,
+        "opening_range_low": opening_low,
+        "direction": direction,
+        "setup": "ORB breakout" if broke_opening_range else "momentum breakout",
+        "entry_setup": "orb" if broke_opening_range else "level",
+        "trigger_level": opening_high if direction == "LONG" and broke_opening_range else (
+            opening_low if direction == "SHORT" and broke_opening_range else (
+                momentum_high if direction == "LONG" else momentum_low
+            )
+        ),
+        "confidence_score": round(min(score, 100), 1),
+        "session_date": session_day.isoformat(),
+        "as_of": signal_time.strftime("%Y-%m-%d %H:%M"),
+    }
+
+
+def _ticker_history_frame(history, ticker):
+    if history is None or history.empty:
+        return None
+    if not isinstance(history.columns, pd.MultiIndex):
+        return history
+    for level in range(history.columns.nlevels):
+        if ticker in history.columns.get_level_values(level):
+            try:
+                return history.xs(ticker, axis=1, level=level)
+            except (KeyError, ValueError):
+                continue
+    return None
+
+
+def _fetch_intraday_frames(tickers, interval="5m"):
+    """Fetch a bounded five-session Yahoo intraday batch."""
+    if not tickers:
+        return {}, ""
+    try:
+        history = yf.download(
+            tickers=tickers,
+            period="5d",
+            interval=interval,
+            group_by="ticker",
+            auto_adjust=False,
+            progress=False,
+            threads=True,
+            timeout=30,
+        )
+    except Exception as exc:
+        return {}, f"Yahoo {interval} fallback failed: {exc}"
+    if history is None or history.empty:
+        return {}, f"Yahoo {interval} fallback returned no bars."
+    frames = {}
+    for ticker in tickers:
+        frame = _ticker_history_frame(history, ticker)
+        if frame is not None and not frame.empty:
+            frames[ticker] = frame
+    return frames, ""
+
+
+def _fno_setup_candidates(intraday_frames, average_volumes=None, min_volume=100000):
+    average_volumes = average_volumes or {}
+    candidates = []
+    for ticker, frame in intraday_frames.items():
+        features = _intraday_features(frame, average_volumes.get(ticker))
+        if not features or not features["liquid"] or features["average_daily_volume"] < min_volume:
+            continue
+        features.update(symbol=_symbol(ticker), setups=[features["setup"]])
+        features["_liquidity_volume"] = features["average_daily_volume"]
+        features["_rank"] = features["confidence_score"] * features["average_daily_volume"] * features["price"]
+        candidates.append(features)
+    return sorted(candidates, key=lambda row: (-row["_rank"], row["symbol"]))
+
+
 def _scanner_setup_rows(scan_doc):
     """Join setup hits to full scanner rows and sort by available liquidity."""
     stocks = {
@@ -339,11 +517,12 @@ def _isolated_config(root, portfolio):
         "max_loss_per_trade_inr": cap,
         "min_reward_risk": max(1.5, min_rr),
         "paper": True,
+        "allow_short": True,
     })
     return config, cash
 
 
-def run_autopilot(root, progress, mode="fo_intraday"):
+def run_autopilot(root, progress, mode="fo_intraday", now=None):
     """Run the selected qualification pipeline and return plans plus funnel evidence."""
     if mode not in ("fo_intraday", "cash_swing"):
         raise ValueError("mode must be 'fo_intraday' or 'cash_swing'")
@@ -356,9 +535,13 @@ def run_autopilot(root, progress, mode="fo_intraday"):
     portfolio = json.loads((root / "trader" / "portfolio.json").read_text(encoding="utf-8"))
     config, budget = _isolated_config(root, portfolio)
 
-    def report(index, message, tickers=None):
+    def report(index, message, tickers=None, evaluated=None):
         names = list(dict.fromkeys(_symbol(ticker) for ticker in (tickers or []) if ticker))
-        if names:
+        checked = list(dict.fromkeys(_symbol(ticker) for ticker in (evaluated or []) if ticker))
+        if checked:
+            passed = ", ".join(names) if names else "—"
+            message = f"{message} · {len(names)} passed: {passed} · evaluated: {', '.join(checked)}"
+        elif names:
             message = f"{message} · {len(names)} passed: {', '.join(names)}"
         progress(index + 1, SKILLS[index], message)
 
@@ -372,6 +555,8 @@ def run_autopilot(root, progress, mode="fo_intraday"):
                 "orb", "--symbols", ",".join(FNO_SYMBOLS), "--json",
                 "--min-volume", "0", "--out", str(scan_path),
             ]
+            if now:
+                scan_args += ["--now", now]
             scan_message = f"scanning {len(FNO_SYMBOLS)} liquid F&O underlyings with 5-minute ORB bars"
         else:
             scan_args = [
@@ -384,8 +569,55 @@ def run_autopilot(root, progress, mode="fo_intraday"):
             scan_args,
             timeout=240,
         )
-        scan_doc = _json(stdout)
-        if code not in (0, 1) or not isinstance(scan_doc, dict):
+        raw_scan_doc = _json(stdout)
+        if mode == "fo_intraday":
+            scan_doc = raw_scan_doc if isinstance(raw_scan_doc, dict) else {}
+            intraday_frames, intraday_note = _fetch_intraday_frames(FNO_SYMBOLS, interval="5m")
+            average_volumes, volume_note = _fetch_average_volumes(FNO_SYMBOLS)
+            liquid_candidates = _fno_setup_candidates(intraday_frames, average_volumes)
+            if not liquid_candidates and isinstance(raw_scan_doc, dict):
+                fallback_candidates = _scanner_setup_candidates(
+                    raw_scan_doc, min_volume=100000, average_volumes=average_volumes,
+                )
+                for row in fallback_candidates:
+                    row.update(direction="LONG", confidence_score=50, setup="scanner ORB")
+                liquid_candidates = fallback_candidates
+            scan_error = stderr or (stdout if not isinstance(raw_scan_doc, dict) else "")
+            scan_doc.update(
+                mode="fo_intraday",
+                universe=len(FNO_SYMBOLS),
+                scanned=max(int(scan_doc.get("scanned") or 0), len(intraday_frames)),
+                source="Yahoo 5m bars with NSE live quote fallback",
+                hits=[
+                    {
+                        "symbol": row["symbol"],
+                        "price": row["price"],
+                        "direction": row["direction"],
+                        "setups": row["setups"],
+                        "volume": row.get("volume"),
+                    }
+                    for row in liquid_candidates
+                ],
+                stocks=liquid_candidates,
+            )
+            scan_path.write_text(json.dumps(scan_doc, indent=2) + "\n", encoding="utf-8")
+            shortlisted = liquid_candidates[:10]
+            fallback_tickers = list(FNO_SYMBOLS)
+            volume_fallback_note = volume_note
+            scanned_rows = scan_doc.get("stocks") or []
+            if intraday_note:
+                quote_outputs = [intraday_note]
+            else:
+                quote_outputs = []
+            if scan_error:
+                quote_outputs.append(f"Scanner CLI note: {scan_error}")
+            if volume_fallback_note:
+                quote_outputs.append(volume_fallback_note)
+        else:
+            scan_doc = raw_scan_doc
+            if code not in (0, 1) or not isinstance(scan_doc, dict):
+                scan_doc = None
+        if mode != "fo_intraday" and scan_doc is None:
             _record(verification, 0, SKILLS[0], "FAIL", stderr or stdout or "No scanner JSON output.")
             _record_skipped(verification, 1, "No scanner output; candidates cannot be evaluated.")
             _record_skipped(verification, 2, "No scanner output; candidates cannot be evaluated.")
@@ -399,24 +631,25 @@ def run_autopilot(root, progress, mode="fo_intraday"):
             _record_skipped(verification, 10, "No qualified trades for alerts.")
             report(0, "scanner failed; all candidates rejected")
             return {"market": market, "qualified": [], "candidates": [], "verification": verification}
-        scanned_rows = scan_doc.get("stocks") or scan_doc.get("hits") or []
-        setup_rows = _scanner_setup_rows(scan_doc)
-        fallback_tickers = [
-            row["symbol"]
-            for row in setup_rows
-            if not _numeric_volume(
-                row.get("average_daily_volume"),
-                row.get("avg_daily_volume"),
-                row.get("average_volume"),
-                row.get("avg_volume"),
+        if mode != "fo_intraday":
+            scanned_rows = scan_doc.get("stocks") or scan_doc.get("hits") or []
+            setup_rows = _scanner_setup_rows(scan_doc)
+            fallback_tickers = [
+                row["symbol"]
+                for row in setup_rows
+                if not _numeric_volume(
+                    row.get("average_daily_volume"),
+                    row.get("avg_daily_volume"),
+                    row.get("average_volume"),
+                    row.get("avg_volume"),
+                )
+            ][:100]
+            fallback_volumes, volume_fallback_note = _fetch_average_volumes(fallback_tickers)
+            liquid_candidates = _scanner_setup_candidates(
+                scan_doc, min_volume=100000, average_volumes=fallback_volumes
             )
-        ][:100]
-        fallback_volumes, volume_fallback_note = _fetch_average_volumes(fallback_tickers)
-        liquid_candidates = _scanner_setup_candidates(
-            scan_doc, min_volume=100000, average_volumes=fallback_volumes
-        )
-        shortlisted = liquid_candidates[:10]
-        quote_outputs = []
+            shortlisted = liquid_candidates[:10]
+            quote_outputs = []
         candidates = []
         for row in shortlisted:
             ticker = _symbol(row["symbol"])
@@ -429,11 +662,15 @@ def run_autopilot(root, progress, mode="fo_intraday"):
                 "Entry": None,
                 "SL": None,
                 "Target": None,
+                "Target 1": None,
+                "Target 2": None,
                 "R:R": None,
                 "Time Machine Win %": None,
                 "Expected Value (R)": None,
                 "Passed/Rejected Reason": "Awaiting trader-entry validation",
             }
+            row_with_quote["_funnel"]["Confidence Score"] = row.get("confidence_score")
+            row_with_quote["_entry_now"] = row.get("as_of")
             candidates.append(row_with_quote)
             if quote is None:
                 quote_outputs.append(f"{ticker}: no live quote; entry checks still proceed.")
@@ -443,9 +680,9 @@ def run_autopilot(root, progress, mode="fo_intraday"):
                     f"day_high={quote.get('day_high')}, day_low={quote.get('day_low')}, "
                     f"change_pct={quote.get('change_pct')}, volume={quote.get('volume')}."
                 )
-        if volume_fallback_note:
+        if mode != "fo_intraday" and volume_fallback_note:
             quote_outputs.append(volume_fallback_note)
-        if len(fallback_tickers) > 100:
+        if mode != "fo_intraday" and len(fallback_tickers) > 100:
             quote_outputs.append(
                 f"Yahoo average-volume fallback bounded to first 100 of "
                 f"{len(fallback_tickers)} setup candidates without scanner averages."
@@ -462,20 +699,32 @@ def run_autopilot(root, progress, mode="fo_intraday"):
             f"{scan_doc.get('scanned', 0)} scanned; {len(candidates)} top liquid setup "
             "candidates passed to trader-entry",
             [row["symbol"] for row in candidates],
+            [row["symbol"] for row in candidates],
         )
 
         entry_ok = []
         entry_outputs = []
         for row in candidates:
             ticker = _symbol(row["symbol"])
-            code, out, err = _run(root, SKILLS[1], "entry.py", ["check", ticker, "--json"])
+            side = "buy" if row["_funnel"]["Direction"] == "LONG" else "sell"
+            entry_args = [
+                "check", ticker, "--side", side,
+                "--setup", row.get("entry_setup", "orb"),
+            ]
+            if row.get("entry_setup") == "level" and row.get("trigger_level"):
+                entry_args += ["--level", str(row["trigger_level"])]
+            entry_args += ["--json"]
+            if row.get("_entry_now"):
+                entry_args += ["--now", row["_entry_now"]]
+            code, out, err = _run(root, SKILLS[1], "entry.py", entry_args)
             entry_outputs.append(f"{ticker} [{code}]: {out or err or 'No output.'}")
             result = _json(out)
             if code not in (0, 1) or not isinstance(result, dict):
                 row["_funnel"]["Passed/Rejected Reason"] = f"Entry check unavailable: {err or 'invalid output'}"
                 continue
-            if _symbol(result.get("symbol")) != ticker or result.get("fallback_session"):
-                row["_funnel"]["Passed/Rejected Reason"] = "Entry rejected: stale fallback or symbol mismatch"
+            if (_symbol(result.get("symbol")) != ticker
+                    or str(result.get("side") or "buy").lower() != side):
+                row["_funnel"]["Passed/Rejected Reason"] = "Entry rejected: symbol or direction mismatch"
                 continue
             trigger = result.get("trigger") or {}
             opening = result.get("opening_range") or {}
@@ -492,6 +741,7 @@ def run_autopilot(root, progress, mode="fo_intraday"):
             entry_ok.append({
                 "ticker": ticker,
                 "symbol": ticker,
+                "side": side,
                 "entry": result,
                 "source": out or err,
                 "quote": row["live_quote"],
@@ -504,19 +754,27 @@ def run_autopilot(root, progress, mode="fo_intraday"):
             "NO-DATA, waiting, stale-fallback, and mismatched outputs were rejected.",
             "\n".join(entry_outputs) or "No scanner candidates were available for entry checks.",
         )
-        report(1, f"{len(entry_ok)} fresh entries passed; all others rejected", [item["ticker"] for item in entry_ok])
+        report(
+            1, f"{len(entry_ok)} fresh directional entries passed; all others rejected",
+            [item["ticker"] for item in entry_ok],
+            [row["symbol"] for row in candidates],
+        )
 
         exit_ok = []
         exit_outputs = []
         for item in entry_ok:
             result = item["entry"]
             opening = result["opening_range"]
+            setup = result.get("setup") or "orb"
             args = [
                 "plan", "--symbol", item["ticker"], "--entry", str(result["trigger"]["price"]),
                 "--or-high", str(opening["high"]), "--or-low", str(opening["low"]),
-                "--setup", "orb", "--date", str(result.get("date") or datetime.date.today()),
-                "--json", "--config", str(config_path),
+                "--setup", setup, "--date", str(result.get("date") or datetime.date.today()),
+                "--side", item["side"], "--json", "--config", str(config_path),
             ]
+            if setup == "level":
+                stop = opening["low"] if item["side"] == "buy" else opening["high"]
+                args += ["--stop", f"price:{stop}"]
             entry_time = (result.get("trigger") or {}).get("time") or result.get("time")
             if entry_time:
                 args += ["--time", str(entry_time)]
@@ -536,7 +794,9 @@ def run_autopilot(root, progress, mode="fo_intraday"):
             item["_funnel"].update({
                 "Entry": plan.get("entry"),
                 "SL": plan.get("stop"),
-                "Target": plan.get("target"),
+                "Target": plan.get("target2", plan.get("target")),
+                "Target 1": plan.get("target1"),
+                "Target 2": plan.get("target2", plan.get("target")),
                 "R:R": plan.get("reward_risk"),
                 "Passed/Rejected Reason": "Passed trader-exit; awaiting Time Machine",
             })
@@ -546,7 +806,11 @@ def run_autopilot(root, progress, mode="fo_intraday"):
             f"Fresh exit plans with R:R >= 1.5: {len(exit_ok)} of {len(entry_ok)}.",
             "\n".join(exit_outputs) or "No fresh entries were available for exit-plan checks.",
         )
-        report(2, f"{len(exit_ok)} exit plans passed R:R >= 1.5", [item["ticker"] for item in exit_ok])
+        report(
+            2, f"{len(exit_ok)} exit plans passed R:R >= 1.5",
+            [item["ticker"] for item in exit_ok],
+            [item["ticker"] for item in entry_ok],
+        )
 
         replay_ok = []
         replay_outputs = []
@@ -555,7 +819,10 @@ def run_autopilot(root, progress, mode="fo_intraday"):
             plan_path.write_text(json.dumps(item["plan"]), encoding="utf-8")
             code, out, err = _run(
                 root, SKILLS[3], "timemachine.py",
-                ["run", "--plan", str(plan_path), "--replays", "500", "--until", "15:20", "--json"],
+                [
+                    "run", "--plan", str(plan_path), "--replays", "500",
+                    "--until", "15:20", "--json",
+                ] + (["--now", now] if now else []),
                 timeout=240,
             )
             replay = _json(out)
@@ -584,7 +851,11 @@ def run_autopilot(root, progress, mode="fo_intraday"):
             f"{len(replay_ok)} of {len(exit_ok)}.",
             "\n".join(replay_outputs) or "No candidate had a fresh exit plan to replay.",
         )
-        report(3, f"{len(replay_ok)} passed replay probability and expected-value gates", [item["ticker"] for item in replay_ok])
+        report(
+            3, f"{len(replay_ok)} passed replay probability and expected-value gates",
+            [item["ticker"] for item in replay_ok],
+            [item["ticker"] for item in exit_ok],
+        )
 
         research = []
         research_outputs = []
@@ -659,7 +930,11 @@ def run_autopilot(root, progress, mode="fo_intraday"):
                 f"of {len(research)} candidates.",
                 "\n".join(research_outputs) or "No candidates survived the replay gate.",
             )
-            report(index, f"{label}: results recorded for {len(research)} candidate(s)", [item["ticker"] for item in research])
+            report(
+                index, f"{label}: results recorded for {len(research)} candidate(s)",
+                [item["ticker"] for item in research],
+                [item["ticker"] for item in replay_ok],
+            )
 
         sized = []
         risk_passed = []
@@ -671,12 +946,14 @@ def run_autopilot(root, progress, mode="fo_intraday"):
             orders_path = temp_path / f"{ticker.replace('.', '_')}-orders.json"
             risk_path = temp_path / f"{ticker.replace('.', '_')}-risk.json"
             plan_path.write_text(json.dumps(item["plan"]), encoding="utf-8")
-            size_code, size_out, size_err = _run(
-                root, SKILLS[7], "size.py",
-                ["--plan", str(plan_path), "--config", str(config_path),
-                 "--portfolio", str(root / "trader" / "portfolio.json"),
-                 "--budget", str(budget), "--write", str(orders_path), "--json"],
-            )
+            size_args = [
+                "--plan", str(plan_path), "--config", str(config_path),
+                "--portfolio", str(root / "trader" / "portfolio.json"),
+                "--budget", str(budget), "--write", str(orders_path), "--json",
+            ]
+            if now:
+                size_args += ["--now", now]
+            size_code, size_out, size_err = _run(root, SKILLS[7], "size.py", size_args)
             sizing_doc = _json(size_out)
             budget_outputs.append(f"{ticker} [{size_code}]: {size_out or size_err}")
             if (
@@ -693,12 +970,14 @@ def run_autopilot(root, progress, mode="fo_intraday"):
             item["sizing"] = sizing
             item["_funnel"]["Passed/Rejected Reason"] = "Passed INR sizing; awaiting trader-risk"
             sized.append(item)
-            risk_code, risk_out, risk_err = _run(
-                root, SKILLS[8], "check.py",
-                ["--orders", str(orders_path), "--config", str(config_path),
-                 "--portfolio", str(root / "trader" / "portfolio.json"), "--json",
-                 "--out", str(risk_path)],
-            )
+            risk_args = [
+                "--orders", str(orders_path), "--config", str(config_path),
+                "--portfolio", str(root / "trader" / "portfolio.json"), "--json",
+                "--out", str(risk_path),
+            ]
+            if now:
+                risk_args += ["--now", now]
+            risk_code, risk_out, risk_err = _run(root, SKILLS[8], "check.py", risk_args)
             risk_doc = _json(risk_out)
             risk_outputs.append(f"{ticker} [{risk_code}]: {risk_out or risk_err}")
             results = risk_doc.get("results") if isinstance(risk_doc, dict) else []
@@ -722,13 +1001,20 @@ def run_autopilot(root, progress, mode="fo_intraday"):
             f"INR sizing at <= 1% account risk: {len(sized)} candidate(s) sized.",
             "\n".join(budget_outputs) or "No candidates reached position sizing.",
         )
-        report(7, f"{len(sized)} passed INR sizing and the 1% risk cap", [item["ticker"] for item in sized])
+        report(
+            7, f"{len(sized)} passed INR sizing and the 1% risk cap",
+            [item["ticker"] for item in sized],
+            [item["ticker"] for item in research],
+        )
         _record(
             verification, 8, SKILLS[8], "PASS" if risk_passed else "WARN",
             f"trader-risk PASS for {len(risk_passed)} candidate(s); failing verdicts were rejected.",
             "\n".join(risk_outputs) or "No sized orders were available for risk validation.",
         )
-        report(8, f"{len(risk_passed)} passed trader-risk", [item["ticker"] for item in risk_passed])
+        report(
+            8, f"{len(risk_passed)} passed trader-risk", [item["ticker"] for item in risk_passed],
+            [item["ticker"] for item in sized],
+        )
 
         final = sorted(
             risk_passed,
@@ -765,16 +1051,22 @@ def run_autopilot(root, progress, mode="fo_intraday"):
                 ticker = item["ticker"]
                 plan_path = temp_path / f"{ticker.replace('.', '_')}-plan.json"
                 plan_path.write_text(json.dumps(item["plan"]), encoding="utf-8")
+                broker_args = [
+                    "show", "--orders", item["_orders_path"], "--risk", item["_risk_path"],
+                    "--config", str(config_path), "--json",
+                ]
+                if now:
+                    broker_args += ["--now", now]
                 broker_code, broker_out, broker_err = _run(
-                    root, SKILLS[9], "ticket.py",
-                    ["show", "--orders", item["_orders_path"], "--risk", item["_risk_path"],
-                     "--config", str(config_path), "--json"],
+                    root, SKILLS[9], "ticket.py", broker_args,
                 )
                 broker_outputs.append(f"{ticker} [{broker_code}]: {broker_out or broker_err}")
+                alert_args = [
+                    "add", "--from-plan", "--plan", str(plan_path),
+                    "--rules", str(root / "trader" / "alerts.json"),
+                ]
                 alert_code, alert_out, alert_err = _run(
-                    root, SKILLS[10], "alerts.py",
-                    ["add", "--from-plan", "--plan", str(plan_path),
-                     "--rules", str(root / "trader" / "alerts.json")],
+                    root, SKILLS[10], "alerts.py", alert_args,
                 )
                 alert_outputs.append(f"{ticker} [{alert_code}]: {alert_out or alert_err}")
                 if broker_code == 0:
@@ -788,20 +1080,30 @@ def run_autopilot(root, progress, mode="fo_intraday"):
             )
             for item in final:
                 item["_funnel"]["Passed/Rejected Reason"] = "Passed all 11 skills; paper ticket and alerts ready"
-            report(9, f"paper tickets rendered for {len(final)} final trade(s); no order placed")
+            broker_passed = [item["ticker"] for item in final if item.get("broker_output")]
+            report(
+                9, f"paper tickets rendered for {len(broker_passed)} final trade(s); no order placed",
+                broker_passed,
+                [item["ticker"] for item in risk_passed],
+            )
             _record(
                 verification, 10, SKILLS[10], "PASS" if all(item.get("alert_output") for item in final) else "WARN",
                 f"Entry/SL/Target/flat-by alerts configured for {sum(bool(item.get('alert_output')) for item in final)} "
                 f"of {len(final)} final trade(s).",
                 "\n".join(alert_outputs),
             )
-            report(10, "final-trade alerts set", [item["ticker"] for item in final])
+            alerts_passed = [item["ticker"] for item in final if item.get("alert_output")]
+            report(
+                10, f"alerts configured for {len(alerts_passed)} final trade(s)",
+                alerts_passed,
+                [item["ticker"] for item in final],
+            )
             qualified = final
         else:
             _record_skipped(verification, 9, "No risk-approved trades; no tickets generated.")
             _record_skipped(verification, 10, "No risk-approved trades; no alerts generated.")
-            report(9, "no risk-approved tickets to render")
-            report(10, "no qualified trades; no alerts written")
+            report(9, "no risk-approved tickets to render", evaluated=[item["symbol"] for item in candidates])
+            report(10, "no qualified trades; no alerts written", evaluated=[item["symbol"] for item in candidates])
 
     for item in qualified:
         item.pop("_orders_path", None)
@@ -825,12 +1127,19 @@ def main(argv=None):
         "--mode", choices=("fo_intraday", "cash_swing"), default="fo_intraday",
         help="F&O 5-minute opening-range mode (default) or daily cash-swing mode",
     )
+    parser.add_argument(
+        "--root", type=Path, default=Path(__file__).resolve().parent,
+        help="workspace root (defaults to the repository; useful for isolated paper runs)",
+    )
+    parser.add_argument(
+        "--now", help="pin the simulated IST time for paper-only replay/testing",
+    )
     args = parser.parse_args(argv)
 
     def progress(step, skill, message):
         print(f"{step}/11 · {skill} · {message}", file=sys.stderr, flush=True)
 
-    result = run_autopilot(Path(__file__).resolve().parent, progress, mode=args.mode)
+    result = run_autopilot(args.root, progress, mode=args.mode, now=args.now)
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 

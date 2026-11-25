@@ -55,19 +55,21 @@ level`, `--offline FILE` (a saved Yahoo chart JSON for an ATR stop).
 | --- | --- |
 | `or-mid` | the opening-range midpoint (the default for an opening-range breakout) |
 | `or-low` | the opening-range low: wider, so fewer shares for the same max loss |
+| `or-high` | the opening-range high (the standard short-side opening-range stop) |
 | `price:X` | your price |
-| `pct:X` | X percent under the entry |
-| `atr:K` | K times the 14-bar ATR under the entry, on the session's bars up to the entry bar. With fewer than 14 bars by then it averages all of them and says so |
+| `pct:X` | X percent away from the entry |
+| `atr:K` | K times the 14-bar ATR away from the entry (under long / over short), on the session's bars up to the entry bar. With fewer than 14 bars by then it averages all of them and says so |
 
 A level setup has no opening range to lean on, so it needs a stop you name.
 
-- **Rounding.** The stop rounds AWAY from the entry to the cent (down, for a
-  long). Risk = entry minus stop. Target = entry + R x risk, rounded half up
+- **Rounding.** The stop rounds AWAY from the entry to the cent (down for long,
+  up for short). Risk is the absolute entry-to-stop distance. Target = entry
+  plus R x risk for long or minus R x risk for short, rounded half up
   to the cent. `2R` by default; `1R`, `1.5R` or `price:X` also work.
-- **Refused, with the reason.** A stop at or above the entry. A target at or
-  below it. A risk under 0.05% of the price: too tight to survive the
-  spread, normal wiggle would stop you out. An entry.json that has not
-  triggered (unless you give `--entry`). A short: v2 plans longs only.
+- **Refused, with the reason.** A stop or target on the wrong side of the
+  entry. A risk under 0.05% of the price: too tight to survive the spread,
+  normal wiggle would stop you out. An entry.json that has not triggered
+  (unless you give `--entry`).
 - **Flat by.** 15:25 IST by default (or `flat_by` in the config), five
   minutes before the NSE's 15:30 close. An entry at or after the flat-by time
   is refused. NSE holidays are not embedded; verify the official exchange
@@ -116,7 +118,8 @@ sizes it using the configured max loss per trade.
   never prints a P&L or a return.
 - Nothing here promises winning trades or money. A 1R target is not a
   prediction that the price gets there.
-- Long side only. v2 plans longs only.
+- Supports long and short paper plans; short sizing remains disabled unless
+  the isolated risk configuration explicitly permits it.
 
 ## What it never does
 

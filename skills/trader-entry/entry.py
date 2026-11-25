@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Entry Timer for trader-entry: watches a setup bar by bar and says the
-moment to get in. Standard library only. Long side only. It never places an order.
+moment to get in. Standard library only. It never places an order.
 
     python3 entry.py check RELIANCE                       # opening-range breakout, 5-minute bars
     python3 entry.py check RELIANCE --now "2026-10-19 10:15" --offline RELIANCE.NS.json
@@ -9,13 +9,13 @@ moment to get in. Standard library only. Long side only. It never places an orde
     python3 entry.py watch RELIANCE --every 30 --until 15:30  # one line per closed bar
     python3 entry.py watchlist                            # every hit in trader/watchlist.json
 
-Setups (v2 plans longs only):
+Setups:
   orb    opening-range breakout. The range is the high and low of the first
          --or-minutes (default 15: the 9:15, 9:20 and 9:25 five-minute bars).
          It triggers on the first COMPLETED bar after the range that CLOSES
-         above the range high. A wick above the high is not a trigger.
-  level  the first completed bar that closes above --level (for example a
-         20-day high from trader-scanner).
+         above (buy) or below (sell) the relevant range boundary.
+  level  the first completed bar that closes beyond --level in the selected
+         direction (for example a 20-day high/low from trader-scanner).
   --min-volume-x X  the trigger bar also needs at least X times the average
          volume of the opening-range bars (the 9:15 bar carries the opening
          auction, so 1.0 is already a high bar).
@@ -346,7 +346,7 @@ def r2(x):
 
 
 def evaluate(chart, now_utc, setup="orb", or_minutes=15, interval="5m", level=None,
-             min_volume_x=None, cfg=None):
+             min_volume_x=None, cfg=None, side="buy"):
     """Pure function: the setup's status at now_utc from one session's bars."""
     cfg = cfg or dict(DEFAULTS)
     if interval not in INTERVALS:
@@ -356,12 +356,19 @@ def evaluate(chart, now_utc, setup="orb", or_minutes=15, interval="5m", level=No
         raise EntryError("--or-minutes must be a whole number of %s bars" % interval)
     if setup not in ("orb", "level"):
         raise EntryError("--setup is orb or level")
+    side = str(side or "buy").lower()
+    if side in ("long",):
+        side = "buy"
+    elif side in ("short",):
+        side = "sell"
+    if side not in ("buy", "sell"):
+        raise EntryError("--side is buy/long or sell/short")
     if setup == "level" and level is None:
         raise EntryError("--setup level needs --level PRICE (for example a 20-day high)")
     n_or = or_minutes * 60 // step
     local = to_ist(now_utc)
     day = local.date()
-    res = {"symbol": chart["symbol"], "setup": setup, "side": "buy", "currency": "INR", "date": day.isoformat(),
+    res = {"symbol": chart["symbol"], "setup": setup, "side": side, "currency": "INR", "date": day.isoformat(),
            "interval": interval, "or_minutes": or_minutes, "now": local.strftime("%Y-%m-%d %H:%M:%S"), "status": "waiting",
            "phase": "", "reason": "", "opening_range": None, "level": None, "trigger": None,
            "last": None, "forming": None, "min_volume_x": min_volume_x,
@@ -431,7 +438,7 @@ def evaluate(chart, now_utc, setup="orb", or_minutes=15, interval="5m", level=No
         if not or_bars:
             res.update(status="no-data", phase="open", reason="Yahoo sent no bars for the opening range")
             return res
-        lvl = max(b["h"] for b in or_bars)
+        lvl = max(b["h"] for b in or_bars) if side == "buy" else min(b["l"] for b in or_bars)
     else:
         lvl = float(level)
     res["level"] = r2(lvl)
@@ -441,7 +448,8 @@ def evaluate(chart, now_utc, setup="orb", or_minutes=15, interval="5m", level=No
     for b in bars:
         if b["slot"] < first_slot or b["end"] < before or b["end"] > cutoff:
             continue
-        if b["c"] > lvl:
+        crossed = b["c"] > lvl if side == "buy" else b["c"] < lvl
+        if crossed:
             vx = (b["v"] / avg_vol) if avg_vol else None
             if min_volume_x and (vx is None or vx < min_volume_x):
                 thin.append(b)
@@ -455,8 +463,12 @@ def evaluate(chart, now_utc, setup="orb", or_minutes=15, interval="5m", level=No
 
     if trig:
         vx = (trig["v"] / avg_vol) if avg_vol else None
+        comparison = "above" if side == "buy" else "below"
+        threshold = (
+            "the range high" if side == "buy" else "the range low"
+        ) if setup == "orb" else "the level"
         res.update(status="triggered", phase="open" if local < close_dt else "after-close",
-                   reason="the %s bar closed above %s" % (short(trig["et"]), "the range high" if setup == "orb" else "the level"))
+                   reason="the %s bar closed %s %s" % (short(trig["et"]), comparison, threshold))
         res["trigger"] = {"time": ampm(trig["end"]), "close_time": hm(trig["end"]), "bar_start": hm(trig["et"]),
                           "bar_index": trig["slot"], "price": r2(trig["c"]), "close": trig["c"],
                           "volume": trig["v"], "volume_x": r2(vx), "pct_over": r2(100.0 * (trig["c"] / lvl - 1))}
@@ -468,7 +480,11 @@ def evaluate(chart, now_utc, setup="orb", or_minutes=15, interval="5m", level=No
     if not bars:
         res.update(status="no-data", phase="open", reason="Yahoo sent no bars for %s yet" % day.isoformat())
         return res
-    what = "close above the range high ₹%.2f" % lvl if setup == "orb" else "close above ₹%.2f" % lvl
+    comparison = "above" if side == "buy" else "below"
+    threshold = (
+        "the range high" if side == "buy" else "the range low"
+    ) if setup == "orb" else "₹%.2f" % lvl
+    what = "close %s %s" % (comparison, threshold)
     if local >= cutoff and not (pending and pending["end"] <= cutoff):
         res.update(status="expired", phase="after-close" if local >= close_dt else "after-cutoff",
                    reason="no %s by %s, the last time for a new entry%s" % (
@@ -557,7 +573,7 @@ def entry_doc(res, now_utc):
     """trader/entry.json, the contract shape (plus a plain-words reason)."""
     t = res.get("trigger") or {}
     orr = res.get("opening_range")
-    return {"created_by": "trader-entry", "symbol": res["symbol"], "setup": res["setup"], "side": "buy",
+    return {"created_by": "trader-entry", "symbol": res["symbol"], "setup": res["setup"], "side": res["side"],
             "currency": "INR",
             "date": res["date"], "status": res["status"], "time": t.get("time"), "bar_start": t.get("bar_start"),
             "bar_index": t.get("bar_index"), "price": t.get("price"), "level": res.get("level"),
@@ -797,8 +813,6 @@ def watch_loop(provider, clock, sleep, emit, opts, every=30, until=None, max_err
 # ---------------------------------------------------------------- commands
 
 def _opts(a, cfg):
-    if a.side in ("sell", "short"):
-        raise EntryError("v2 plans longs only: no short entries. Watch for a buy (--side buy) instead.")
     if a.setup == "orb" and a.level is not None:
         raise EntryError("--level is for --setup level (an orb's level is its range high)")
     if a.min_volume_x is not None and a.min_volume_x <= 0:
@@ -806,6 +820,7 @@ def _opts(a, cfg):
     if a.level is not None and a.level <= 0:
         raise EntryError("--level must be a price above 0")
     return {"setup": a.setup, "or_minutes": a.or_minutes, "interval": a.interval, "level": a.level,
+            "side": a.side,
             "min_volume_x": a.min_volume_x, "cfg": cfg}
 
 
@@ -953,7 +968,7 @@ def main(argv=None):
         p.add_argument("--interval", choices=["5m", "1m"], default="5m")
         p.add_argument("--level", type=float, help="the price to close above (--setup level)")
         p.add_argument("--min-volume-x", type=float, help="trigger bar volume vs the range bars' average")
-        p.add_argument("--side", default="buy", choices=["buy", "long", "sell", "short"], help="v2: buy only")
+        p.add_argument("--side", default="buy", choices=["buy", "long", "sell", "short"])
         p.add_argument("--now", help='pretend it is this IST time, e.g. "2026-10-19 10:15"')
         p.add_argument("--offline", metavar="PATH", help="saved Yahoo chart JSON (.json/.json.gz) or a folder")
         p.add_argument("--config", default="trader/config.json")

@@ -650,7 +650,8 @@ with autopilot_tab:
     st.subheader("Strict NSE trade qualification")
     st.caption(
         "Runs the 11 local trader skills in order. Replay qualification requires at least 40% green paths, "
-        "positive expected value, and an exit plan with R:R of at least 1.5. Tickets are paper proposals only."
+        "positive expected value, and R:R of at least 1.5. Tickets are paper proposals only; short ideas "
+        "do not authorize live short selling."
     )
     autopilot_mode = st.selectbox(
         "Auto-Pilot mode",
@@ -664,6 +665,10 @@ with autopilot_tab:
         progress_log = []
 
         def update_autopilot(step, skill, message):
+            progress_log[:] = [
+                line for line in progress_log
+                if not line.startswith(f"{step}/11 · {skill} · ")
+            ]
             progress_log.append(f"{step}/11 · {skill} · {message}")
             st.session_state["autopilot_trace"] = list(progress_log)
             progress_box.markdown("\n\n".join(f"- {line}" for line in progress_log[-11:]))
@@ -676,6 +681,7 @@ with autopilot_tab:
             except (OSError, ValueError, RuntimeError) as exc:
                 st.session_state["autopilot_result"] = {
                     "error": str(exc),
+                    "mode": mode_key,
                     "qualified": [],
                     "verification": [
                         {
@@ -690,33 +696,26 @@ with autopilot_tab:
                 }
 
     autopilot_result = st.session_state.get("autopilot_result")
+    has_autopilot_result = bool(autopilot_result)
+    if not autopilot_result:
+        autopilot_result = {
+            "market": {"mood": "Caution", "reason": "Run Auto-Pilot to evaluate current F&O candidates."},
+            "qualified": [],
+            "candidates": [],
+        }
     if autopilot_result:
         mood = autopilot_result.get("market") or {}
         mood_label = mood.get("mood", "Caution")
         mood_color = {"Bullish": "🟢", "Caution": "🟠", "Bearish": "🔴"}.get(mood_label, "🟠")
         st.markdown(f"### {mood_color} Market Mood: **{mood_label}**")
         st.caption(mood.get("reason", "Market regime data unavailable."))
-        if autopilot_result.get("error"):
-            st.error(autopilot_result["error"])
         qualified = autopilot_result.get("qualified") or []
         candidates = autopilot_result.get("candidates") or []
 
-        if qualified:
-            best = qualified[0]
-            best_plan = best["plan"]
-            with st.container(border=True):
-                st.markdown(f"#### Best F&O Intraday Setup · {best['symbol']}")
-                st.caption("Highest-ranked rules-qualified paper proposal. This is not a recommendation.")
-                summary_cols = st.columns(5)
-                summary_cols[0].metric("Direction", str(best.get("_funnel", {}).get("Direction", "LONG")))
-                summary_cols[1].metric("Entry", f"₹{best_plan['entry']:,.2f}")
-                summary_cols[2].metric("Stop-Loss", f"₹{best_plan['stop']:,.2f}")
-                summary_cols[3].metric("Target", f"₹{best_plan['target']:,.2f}")
-                summary_cols[4].metric("R:R · Quantity", f"{best_plan['reward_risk']:.2f} · {best['sizing']['qty']:,}")
-
         funnel_columns = [
-            "Symbol", "Direction", "Entry", "SL", "Target", "R:R",
-            "Time Machine Win %", "Expected Value (R)", "Passed/Rejected Reason",
+            "Symbol", "Direction", "Entry", "SL", "Target", "Target 1", "Target 2", "R:R",
+            "Time Machine Win %", "Expected Value (R)", "Confidence Score",
+            "Passed/Rejected Reason",
         ]
         funnel_frame = pd.DataFrame(candidates).reindex(columns=funnel_columns)
         st.markdown("#### Top 10 Candidates Funnel Table")
@@ -728,12 +727,39 @@ with autopilot_tab:
                 "Entry": st.column_config.NumberColumn(format="₹%.2f"),
                 "SL": st.column_config.NumberColumn(format="₹%.2f"),
                 "Target": st.column_config.NumberColumn(format="₹%.2f"),
+                "Target 1": st.column_config.NumberColumn(format="₹%.2f"),
+                "Target 2": st.column_config.NumberColumn(format="₹%.2f"),
                 "R:R": st.column_config.NumberColumn(format="%.2f"),
                 "Time Machine Win %": st.column_config.NumberColumn(format="%.1f%%"),
                 "Expected Value (R)": st.column_config.NumberColumn(format="%+.3fR"),
+                "Confidence Score": st.column_config.NumberColumn(format="%.1f"),
                 "Passed/Rejected Reason": st.column_config.TextColumn(width="large"),
             },
         )
+        if autopilot_result.get("error"):
+            st.error(autopilot_result["error"])
+
+        if qualified:
+            best = qualified[0]
+            best_plan = best["plan"]
+            with st.container(border=True):
+                mode_title = "F&O Intraday" if autopilot_result.get("mode") == "fo_intraday" else "Cash Swing"
+                st.markdown(f"#### Best {mode_title} Setup · {best['symbol']}")
+                st.caption("Highest-ranked rules-qualified paper proposal. This is not a recommendation.")
+                summary_cols = st.columns(7)
+                summary_cols[0].metric("Direction", str(best.get("_funnel", {}).get("Direction", "LONG")))
+                summary_cols[1].metric("Entry", f"₹{best_plan['entry']:,.2f}")
+                summary_cols[2].metric("Stop-Loss", f"₹{best_plan['stop']:,.2f}")
+                summary_cols[3].metric("Target 1", f"₹{best_plan.get('target1', best_plan['target']):,.2f}")
+                summary_cols[4].metric("Target 2", f"₹{best_plan.get('target2', best_plan['target']):,.2f}")
+                summary_cols[5].metric(
+                    "R:R",
+                    f"{best_plan['reward_risk']:.2f}",
+                )
+                summary_cols[6].metric(
+                    "Qty · Confidence",
+                    f"{best['sizing']['qty']:,} · {best.get('_funnel', {}).get('Confidence Score', '—')}",
+                )
 
         trace = st.session_state.get("autopilot_trace") or []
         if trace:
@@ -742,7 +768,8 @@ with autopilot_tab:
                     st.markdown(f"- {line}")
 
         if not qualified:
-            st.warning("No Qualified Trade Found Today (Capital Protected)")
+            if has_autopilot_result:
+                st.warning("No Qualified Trade Found Today (Capital Protected)")
         else:
             for trade in qualified:
                 plan = trade["plan"]
@@ -814,7 +841,7 @@ with autopilot_tab:
                 if histogram.get("bins"):
                     left, right = histogram.get("lo", 0), histogram.get("hi", 0)
                     if mc.get("hist_R"):
-                        risk_per_share = plan["entry"] - plan["stop"]
+                        risk_per_share = abs(plan["entry"] - plan["stop"])
                         pnl_values = [
                             (left + (right - left) * (index + 0.5) / len(histogram["bins"]))
                             * risk_per_share * trade["sizing"]["qty"]
@@ -822,7 +849,8 @@ with autopilot_tab:
                         ]
                     else:
                         pnl_values = [
-                            (left + (right - left) * index / len(histogram["bins"]) - plan["entry"])
+                            ((left + (right - left) * index / len(histogram["bins"]) - plan["entry"])
+                             * (1 if plan.get("side", "buy") == "buy" else -1))
                             * trade["sizing"]["qty"]
                             for index in range(len(histogram["bins"]))
                         ]

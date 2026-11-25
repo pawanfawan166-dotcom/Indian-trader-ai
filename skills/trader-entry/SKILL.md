@@ -123,8 +123,10 @@ and the trigger moves to 10:35 AM at ₹1,365.75 (the 10:30 bar, 7.98x).
   and can lag. Say so when a minute matters.
 - A signal is information, not an order, and not a promise. Nothing here
   promises winning trades or money.
-- Long side only. v2 plans longs only. If the user wants a short, say that.
-- One trigger per setup per day: the first close above. Later closes do not
+- Supports `buy`/`long` breakouts above the opening range or a level and
+  `sell`/`short` breakdowns below them. Short signals are directional only;
+  they do not enable live short selling.
+- One trigger per setup per day: the first close beyond the directional level. Later closes do not
   reset it.
 - Never call an entry early because a bar looks like it will close above.
 

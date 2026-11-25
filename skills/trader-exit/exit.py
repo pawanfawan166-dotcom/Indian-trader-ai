@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Exit Planner for trader-exit: sets the stop and the target BEFORE you
-enter, so you know when to get out. Standard library only. Long side only.
+enter, so you know when to get out. Standard library only.
 It never places an order.
 
     python3 exit.py plan                                    # from trader/entry.json: or-mid stop, 2R target
@@ -10,24 +10,24 @@ It never places an order.
     python3 exit.py plan --symbol RELIANCE --entry 1364.18 --setup level --stop pct:1
     python3 exit.py show                                    # the current trader/plan.json
 
-Stops (a long's stop rounds DOWN to the cent, away from the entry):
-  or-mid     the opening-range midpoint (the default for an orb entry)
+Stops (round away from the entry: down for long, up for short):
+  or-mid     the opening-range midpoint (the default for a long orb entry)
   or-low     the opening-range low
+  or-high    the opening-range high (short orb stop)
   price:X    your price
-  pct:X      X percent under the entry
-  atr:K      K times the 14-bar ATR under the entry, on the session's bars up
+  pct:X      X percent away from the entry
+  atr:K      K times the 14-bar ATR away from the entry, on the session's bars up
              to the entry bar (--offline FILE or Yahoo). With fewer than 14
              bars by then it averages all of them and says so.
   A level setup has no opening-range default: give a stop.
 
 Targets (round half up to the cent):
-  2R (default), 1R, 1.5R ...   entry + R x risk, where risk = entry - stop
+  2R (default), 1R, 1.5R ...   entry +/- R x absolute risk, by direction
   price:X                      your price
 
-Refused, with the reason: a stop at or above the entry, a target at or below
-it, a risk under 0.05% of the price (too tight to survive the spread), an
-entry.json that has not triggered (unless you give --entry), a short (v2
-plans longs only).
+Refused, with the reason: a stop or target on the wrong side of the entry, a
+risk under 0.05% of the price (too tight to survive the spread), or an
+entry.json that has not triggered (unless you give --entry).
 
 flat_by (default 15:25, or "flat_by" in trader/config.json): out by then, win
 or lose, before the NSE close at 15:30 IST.
@@ -49,7 +49,7 @@ import time
 import urllib.error
 import urllib.request
 from urllib.parse import quote
-from decimal import Decimal, InvalidOperation, ROUND_FLOOR, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_UP
 
 UA = "Mozilla/5.0 (compatible; day-trader-skill/2.0; +https://github.com/Jakeschincariol/day-trader-skill)"
 BACKOFF = 5.0
@@ -167,6 +167,11 @@ def floor_cents(x):
     return D(x).quantize(CENT, rounding=ROUND_FLOOR)
 
 
+def ceil_cents(x):
+    """A short's stop: round up, away from the entry."""
+    return D(x).quantize(CENT, rounding=ROUND_CEILING)
+
+
 def money(x):
     return "₹%s" % format(D(x).quantize(CENT), ",f")
 
@@ -192,9 +197,11 @@ def parse_stop(text):
         return "or_mid", None
     if t in ("or-low", "or_low", "low"):
         return "or_low", None
+    if t in ("or-high", "or_high", "high"):
+        return "or_high", None
     m = re.match(r"^(price|pct|atr):\s*[$₹]?([0-9][0-9,]*\.?[0-9]*)$", t)
     if not m:
-        raise PlanError("--stop is or-mid, or-low, price:X, pct:X or atr:K (got %r)" % text)
+        raise PlanError("--stop is or-mid, or-low, or-high, price:X, pct:X or atr:K (got %r)" % text)
     kind, val = m.group(1), D(m.group(2), "--stop")
     if val <= 0:
         raise PlanError("--stop %s needs a number above 0" % kind)
@@ -223,13 +230,21 @@ def r_label(r):
 
 
 def compute(entry, stop_rule, stop_param, target_rule, target_param, or_high=None, or_low=None,
-            atr=None, atr_bars=None):
-    """The stop, the target and the risk, in exact cents. Raises PlanError with the reason."""
+            atr=None, atr_bars=None, side="buy"):
+    """The stop, the target and the risk, in exact cents for a long or short."""
     e = cents(entry)
     if e <= 0:
         raise PlanError("the entry price must be above ₹0")
+    side = str(side or "buy").lower()
+    if side in ("long",):
+        side = "buy"
+    elif side in ("short",):
+        side = "sell"
+    if side not in ("buy", "sell"):
+        raise PlanError("--side is buy/long or sell/short")
+    long = side == "buy"
     detail = ""
-    if stop_rule in ("or_mid", "or_low"):
+    if stop_rule in ("or_mid", "or_low", "or_high"):
         if or_high is None or or_low is None:
             raise PlanError("an %s stop needs the opening range (--or-high and --or-low)" % stop_rule.replace("_", "-"))
         oh, ol = cents(or_high), cents(or_low)
@@ -239,48 +254,52 @@ def compute(entry, stop_rule, stop_param, target_rule, target_param, or_high=Non
             raw = (oh + ol) / 2
             label = "opening-range midpoint"
             detail = "(%s + %s) / 2 = ₹%s" % (money(oh), money(ol), num(raw))
-        else:
+        elif stop_rule == "or_low":
             raw, label = ol, "opening-range low"
+        else:
+            raw, label = oh, "opening-range high"
     elif stop_rule == "price":
         raw, label = stop_param, "your price"
     elif stop_rule == "pct":
-        raw = e * (1 - stop_param / 100)
-        label = "%s%% under the entry" % num(stop_param)
-        detail = "%s x (1 - %s%%) = ₹%s" % (money(e), num(stop_param), num(raw))
+        raw = e * (1 - stop_param / 100) if long else e * (1 + stop_param / 100)
+        label = "%s%% %s the entry" % (num(stop_param), "under" if long else "over")
+        detail = "%s x (1 %s %s%%) = ₹%s" % (
+            money(e), "-" if long else "+", num(stop_param), num(raw))
     elif stop_rule == "atr":
         if atr is None:
             raise PlanError("an atr stop needs the session's bars")
         a = D(round(atr, 6))
-        raw = e - stop_param * a
-        label = "%s x ATR(%d) under the entry" % (num(stop_param), atr_bars)
+        raw = e - stop_param * a if long else e + stop_param * a
+        label = "%s x ATR(%d) %s the entry" % (num(stop_param), atr_bars, "under" if long else "over")
         detail = "ATR ₹%s over the %d bars to the entry%s" % (
             num(a.quantize(Decimal("0.0001"))), atr_bars, " (fewer than 14 so far)" if atr_bars < ATR_BARS else "")
     else:
         raise PlanError("unknown stop rule %r" % stop_rule)
-    stop = floor_cents(raw)
+    stop = floor_cents(raw) if long else ceil_cents(raw)
     if stop != D(raw):
-        detail = (detail + ", rounded down" if detail else "₹%s rounded down" % num(raw))
-    if stop >= e:
-        raise PlanError("the stop %s (%s) is at or above the entry %s: a long's stop goes under the entry"
-                        % (money(stop), label, money(e)))
+        rounding_note = "rounded down" if long else "rounded up"
+        detail = (detail + ", " + rounding_note if detail else "₹%s %s" % (num(raw), rounding_note))
+    if (long and stop >= e) or (not long and stop <= e):
+        raise PlanError("the stop %s (%s) must be %s the entry %s for a %s"
+                        % (money(stop), label, "under" if long else "over", money(e), side))
     if stop <= 0:
         raise PlanError("the stop works out to %s: pick a stop above ₹0" % money(stop))
-    risk = e - stop
+    risk = abs(e - stop)
     floor_risk = e * MIN_RISK_PCT / 100
     if risk < floor_risk:
-        raise PlanError("the stop is %s under the entry, less than 0.05%% of the price (%s on %s): too tight to "
+        raise PlanError("the stop is %s from the entry, less than 0.05%% of the price (%s on %s): too tight to "
                         "survive the spread, normal wiggle would stop you out. Widen it."
                         % (money(risk), money(floor_risk.quantize(CENT, rounding=ROUND_HALF_UP)), money(e)))
     if target_rule == "r":
-        target = cents(e + target_param * risk)
+        target = cents(e + target_param * risk if long else e - target_param * risk)
         t_label = r_label(target_param)
     else:
         target = cents(target_param)
         t_label = None
-    if target <= e:
-        raise PlanError("the target %s is at or below the entry %s: a long's target goes above it"
-                        % (money(target), money(e)))
-    rr = ((target - e) / risk).quantize(CENT, rounding=ROUND_HALF_UP)
+    if (long and target <= e) or (not long and target >= e):
+        raise PlanError("the target %s must be %s the entry %s for a %s"
+                        % (money(target), "above" if long else "below", money(e), side))
+    rr = (abs(target - e) / risk).quantize(CENT, rounding=ROUND_HALF_UP)
     if t_label is None:
         t_label = "your price (%sR)" % ratio(rr)
     return {"entry": e, "stop": stop, "stop_label": label, "stop_detail": detail, "target": target,
@@ -485,26 +504,27 @@ def gather(a):
     """The entry facts, from trader/entry.json or the flags."""
     if a.symbol and a.from_path:
         raise PlanError("use --from or --symbol, not both")
-    if a.side in ("sell", "short"):
-        raise PlanError("v2 plans longs only: no stops above a short entry. Plan a buy instead.")
     if a.symbol:
         if a.entry is None:
             raise PlanError("--symbol needs --entry PRICE")
         if (a.or_high is None) != (a.or_low is None):
             raise PlanError("give both --or-high and --or-low, or neither")
-        info = {"symbol": yahoo_symbol(a.symbol), "entry": a.entry, "setup": a.setup or ("orb" if a.or_high is not None else "level"),
+        info = {"symbol": yahoo_symbol(a.symbol), "entry": a.entry, "side": getattr(a, "side", None) or "buy",
+                "setup": a.setup or ("orb" if a.or_high is not None else "level"),
                 "date": a.date, "entry_time": a.time, "entry_bar": a.entry_bar, "interval": a.interval or "5m",
                 "or_high": a.or_high, "or_low": a.or_low, "or_minutes": a.or_minutes, "source": "flags"}
     else:
         path = a.from_path or "trader/entry.json"
         doc = read_json(path, "entry (run /trader-entry first, or give --symbol and --entry)")
-        if str(doc.get("side") or "buy").lower() not in ("buy", "long"):
-            raise PlanError("%s is a %s: v2 plans longs only" % (path, doc.get("side")))
+        side = str(getattr(a, "side", None) or doc.get("side") or "buy").lower()
+        if side not in ("buy", "long", "sell", "short"):
+            raise PlanError("%s has unsupported side %r" % (path, side))
         if doc.get("status") != "triggered" and a.entry is None:
             raise PlanError("%s says %s is %s, not triggered: plan once it triggers, or give --entry PRICE to plan ahead"
                             % (path, doc.get("symbol"), doc.get("status") or "unknown"))
         orr = doc.get("opening_range") or {}
         info = {"symbol": yahoo_symbol(doc.get("symbol") or ""), "entry": a.entry if a.entry is not None else doc.get("price"),
+                "side": side,
                 "setup": a.setup or doc.get("setup") or "orb", "date": a.date or doc.get("date"),
                 "entry_time": a.time or (doc.get("time") if a.entry is None else None),
                 "entry_bar": a.entry_bar if a.entry_bar is not None else (doc.get("bar_index") if a.entry is None else None),
@@ -527,7 +547,7 @@ def build_plan(a, now_utc):
         if info["setup"] != "orb":
             raise PlanError("a %s setup has no opening-range stop to default to: give --stop price:X, pct:X or atr:K"
                             % info["setup"])
-        stop_text = "or-mid"
+        stop_text = "or-mid" if info["side"] in ("buy", "long") else "or-high"
     stop_rule, stop_param = parse_stop(stop_text)
     target_rule, target_param = parse_target(a.target or "2R")
     day = None
@@ -548,19 +568,23 @@ def build_plan(a, now_utc):
                             % (info["interval"], info["symbol"], day, len(bars)))
         atr, atr_n = atr_of(bars)
     c = compute(info["entry"], stop_rule, stop_param, target_rule, target_param, info["or_high"], info["or_low"],
-                atr, atr_n)
+                atr, atr_n, info["side"])
     flat_by, flat_note = resolve_flat_by(day, a.flat_by, cfg, entry_time)
     orr = None
     if info["or_high"] is not None and info["or_low"] is not None:
         orr = {"high": float(cents(info["or_high"])), "low": float(cents(info["or_low"])),
                "minutes": int(info["or_minutes"] or 15)}
-    plan = {"created_by": "trader-exit", "symbol": info["symbol"], "side": "buy", "currency": "INR",
+    one_r_target = cents(c["entry"] + c["risk"] if info["side"] in ("buy", "long")
+                         else c["entry"] - c["risk"])
+    plan = {"created_by": "trader-exit", "symbol": info["symbol"],
+            "side": "buy" if info["side"] in ("buy", "long") else "sell", "currency": "INR",
             "date": day.isoformat(),
             "setup": info["setup"], "entry": float(c["entry"]),
             "entry_time": ampm(entry_time) if entry_time else None,
             "entry_bar": info["entry_bar"], "interval": info["interval"], "opening_range": orr,
             "stop": float(c["stop"]), "stop_rule": stop_rule, "stop_label": c["stop_label"],
-            "target": float(c["target"]), "target_r": float(c["target_r"]), "target_label": c["target_label"],
+            "target": float(c["target"]), "target1": float(one_r_target), "target2": float(c["target"]),
+            "target_r": float(c["target_r"]), "target_label": c["target_label"],
             "risk_per_share": float(c["risk"]), "reward_risk": float(c["reward_risk"]), "flat_by": flat_by,
             "stop_detail": c["stop_detail"], "created_at": now_utc.strftime("%Y-%m-%dT%H:%M:%SZ"), "note": NOTE}
     if atr is not None:
@@ -664,7 +688,7 @@ def main(argv=None):
     p.add_argument("--time", help="entry time, e.g. 10:15 AM")
     p.add_argument("--entry-bar", type=int)
     p.add_argument("--interval", choices=["5m", "1m"])
-    p.add_argument("--side", default="buy", choices=["buy", "long", "sell", "short"], help="v2: buy only")
+    p.add_argument("--side", choices=["buy", "long", "sell", "short"])
     p.add_argument("--stop", help="or-mid (orb default), or-low, price:X, pct:X, atr:K")
     p.add_argument("--target", help="2R (default), 1R, 1.5R, price:X")
     p.add_argument("--flat-by", help="HH:MM IST (default: config flat_by, 15:25)")
