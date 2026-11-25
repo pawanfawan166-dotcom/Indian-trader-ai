@@ -312,13 +312,29 @@ def full_sessions(days, before):
     return full, short
 
 
+def replay_sessions(days, before, last_slot):
+    """Keep sessions with every 5-minute bar through the requested replay horizon."""
+    full, short = [], []
+    required = range(last_slot + 1)
+    for day in sorted(days):
+        if day >= before:
+            continue
+        slots = days[day]
+        missing = [slot for slot in required if slot not in slots]
+        if missing:
+            short.append({"date": day, "bars": len(slots), "missing_through_until": missing})
+            continue
+        full.append((day, [slots[slot] for slot in required]))
+    return full, short
+
+
 # ---------------------------------------------------------------- the simulation (sim.py)
 
 def build_pool(sessions):
     """pool[i] = every past session's bar i as (o, h, l, c) / bar i-1's close, in date order."""
     pool = [[] for _ in range(SESSION_BARS)]
     for _, D in sessions:
-        for i in range(1, SESSION_BARS):
+        for i in range(1, len(D)):
             pc = D[i - 1]["c"]
             pool[i].append((D[i]["o"] / pc, D[i]["h"] / pc, D[i]["l"] / pc, D[i]["c"] / pc))
     return pool
@@ -335,7 +351,7 @@ def simulate(pool, entry, stop, target, k, last, replays=10000, seed=19, window=
     r_target = round(((target - entry) if long else (entry - target)) / risk, 4)
 
     def slot(rng, i):
-        return i if window == 0 else min(SESSION_BARS - 1, max(1, i + rng.randint(-window, window)))
+        return i if window == 0 else min(last, max(1, i + rng.randint(-window, window)))
 
     rng = random.Random(seed)
     choice = rng.choice
@@ -395,6 +411,14 @@ def simulate(pool, entry, stop, target, k, last, replays=10000, seed=19, window=
         b = int((c - lo_) / W) if W > 0 else 0
         if 0 <= b < HIST_BINS:
             bins[b] += 1
+    r_lo, r_hi = min(Rs), max(Rs)
+    if r_lo == r_hi:
+        r_lo, r_hi = r_lo - 0.5, r_hi + 0.5
+    r_width = (r_hi - r_lo) / HIST_BINS
+    r_bins = [0] * HIST_BINS
+    for value in Rs:
+        index = min(HIST_BINS - 1, max(0, int((value - r_lo) / r_width)))
+        r_bins[index] += 1
     return {
         "replays": replays, "seed": seed, "window": window, "bars_left": last - k,
         "p_target": round(cnt["target"] / replays, 4), "p_stop": round(cnt["stop"] / replays, 4),
@@ -403,6 +427,7 @@ def simulate(pool, entry, stop, target, k, last, replays=10000, seed=19, window=
         "p95_close": round(pct(srt, 0.95), 2), "avg_R": round(statistics.mean(Rs), 3),
         "r_at_target": r_target, "band_paths": BAND_PATHS, "bands": bands, "sample_paths": paths,
         "hist": {"lo": round(lo_, 2), "hi": round(hi_, 2), "bins": bins},
+        "hist_R": {"lo": round(r_lo, 3), "hi": round(r_hi, 3), "bins": r_bins},
     }
 
 
@@ -513,7 +538,7 @@ def load_plan(a, now_utc):
 def normalize_plan(raw, src="flags"):
     """A plan dict (trader/plan.json shape) -> the checked plan the time machine runs."""
     sym = nse_symbol(raw.get("symbol"))
-    if not re.match(r"^[A-Z][A-Z0-9.\-]{0,9}$", sym):
+    if not re.match(r"^[A-Z][A-Z0-9.&\-]{0,19}$", sym):
         raise TMError("the plan needs a ticker symbol, got %r" % raw.get("symbol"))
     side = str(raw.get("side") or "buy").lower()
     if side not in ("buy", "sell"):
@@ -697,9 +722,10 @@ def time_machine(text, plan, now_utc, replays=10000, seed=19, window=2, until=No
     if not eb["l"] - 0.01 <= plan["entry"] <= eb["h"] + 0.01:
         warn.append("the plan's entry ₹%.2f is outside that bar's range ₹%.2f to ₹%.2f"
                     % (plan["entry"], eb["l"], eb["h"]))
-    sessions, short = full_sessions(days, plan["date"])
+    sessions, short = replay_sessions(days, plan["date"], last)
     if len(sessions) < MIN_SESSIONS:
-        raise TMError("only %d full session(s) of %s before %s in the data; the time machine needs at least %d"
+        raise TMError("only %d complete replay-window session(s) of %s before %s in the data; "
+                      "the time machine needs at least %d"
                       % (len(sessions), sym, plan["date"], MIN_SESSIONS))
     pool = build_pool(sessions)
     mc = simulate(pool, plan["entry"], plan["stop"], plan["target"], k, last, replays, seed, window, plan["side"])
@@ -729,7 +755,7 @@ def time_machine(text, plan, now_utc, replays=10000, seed=19, window=2, until=No
         "verdict": verdict(mc),
         "verdict_notes": verdict_notes(mc),
         "warnings": warn,
-        "note": ("A simulation built from %s's own last %d full sessions. It is not a prediction: earnings, "
+        "note": ("A simulation built from %s's own last %d complete replay-window sessions. It is not a prediction: earnings, "
                  "news and halts can do things those sessions never did. Same seed, same numbers." % (sym, len(sessions))),
     }
 

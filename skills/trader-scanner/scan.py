@@ -62,6 +62,7 @@ import datetime
 import io
 import gzip
 import json
+import math
 import os
 import re
 import sys
@@ -438,8 +439,11 @@ def load_offline(path):
 
 def rsi(closes, n=14):
     """Wilder's RSI on closes (the same math as the reel's refs/scan.py)."""
-    if len(closes) < n + 1:
+    if not closes:
         return None
+    if len(closes) == 1:
+        return 50.0
+    n = min(n, len(closes) - 1)
     g = [max(0.0, closes[i] - closes[i - 1]) for i in range(1, len(closes))]
     lo = [max(0.0, closes[i - 1] - closes[i]) for i in range(1, len(closes))]
     ag, al = sum(g[:n]) / n, sum(lo[:n]) / n
@@ -447,6 +451,41 @@ def rsi(closes, n=14):
         ag = (ag * (n - 1) + g[i]) / n
         al = (al * (n - 1) + lo[i]) / n
     return 100 - 100 / (1 + ag / al) if al else 100.0
+
+
+MIN_AVG_DAILY_VOLUME = 100000
+
+
+def daily_volume_map(series, valid_dates=None, before_date=None):
+    """Map available daily-bar dates to volume, keeping the latest duplicate."""
+    allowed = set(valid_dates) if valid_dates is not None else None
+    volumes = {}
+    timestamps = series.get("t") or []
+    values = series.get("v") or []
+    for timestamp, value in zip(timestamps, values):
+        if value is None:
+            continue
+        try:
+            volume = float(value)
+            day = ts_to_ist(timestamp).date()
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if not math.isfinite(volume) or volume < 0:
+            continue
+        if allowed is not None and day not in allowed:
+            continue
+        if before_date is not None and day >= before_date:
+            continue
+        volumes[day] = volume
+    return volumes
+
+
+def valid_volume(value):
+    try:
+        volume = float(value)
+    except (TypeError, ValueError):
+        return None
+    return volume if math.isfinite(volume) and volume >= 0 else None
 
 
 def daily_closes(series, now_utc):
@@ -507,7 +546,10 @@ def scan_daily(data, symbols, now_utc, min_price, min_volume):
         price = meta.get("regularMarketPrice")
         if price is None and bars:
             price = bars[-1][1]
-        vol = meta.get("regularMarketVolume")
+        vol = valid_volume(meta.get("regularMarketVolume"))
+        if vol is None:
+            volumes = daily_volume_map(s, {day for day, _ in bars})
+            vol = volumes.get(bars[-1][0]) if bars else None
         if price is None or price < min_price or (min_volume > 0 and (vol is None or vol < min_volume)):
             counts["illiquid"] += 1
             continue
@@ -527,6 +569,126 @@ def scan_daily(data, symbols, now_utc, min_price, min_volume):
     last_date = max(dates, key=lambda d: (dates[d], d)) if dates else None
     counts["hits"] = len(hits)
     return hits, counts, last_date
+
+
+def daily_universe_rows(data, symbols, now_utc, min_price, min_volume):
+    """Return metrics for every fetched chart, including stocks with no setup hit."""
+    hit_map = {hit["symbol"]: hit for hit in scan_daily(
+        data, symbols, now_utc, min_price, min_volume)[0]}
+    rows = []
+    for sym in symbols:
+        series = data.get(sym)
+        if not series:
+            continue
+        bars = daily_closes(series, now_utc)
+        meta = series.get("meta") or {}
+        price = meta.get("regularMarketPrice")
+        if price is None and bars:
+            price = bars[-1][1]
+        completed_dates = {day for day, _ in bars}
+        volumes = daily_volume_map(series, completed_dates)
+        volume = volumes.get(bars[-1][0]) if bars else None
+        if volume is None:
+            volume = valid_volume(meta.get("regularMarketVolume"))
+        if volume is None and volumes:
+            volume = volumes[max(volumes)]
+        recent_volumes = [volumes[day] for day in sorted(volumes)][-20:]
+        average_volume = sum(recent_volumes) / len(recent_volumes) if recent_volumes else volume
+        hit = hit_map.get(sym, {})
+        tags, metrics = [], {}
+        closes = [close for _, close in bars]
+        if len(bars) >= MIN_DAILY_BARS:
+            tags, metrics = find_setups(closes)
+        else:
+            usable_closes = list(closes)
+            if not usable_closes:
+                for value in series.get("c") or []:
+                    try:
+                        close = float(value)
+                    except (TypeError, ValueError):
+                        continue
+                    if math.isfinite(close):
+                        usable_closes.append(close)
+            metrics["rsi"] = rsi(usable_closes)
+        close_date = (
+            bars[-1][0].isoformat() if bars else
+            max(volumes).isoformat() if volumes else
+            ts_to_ist(series["t"][-1]).date().isoformat() if series.get("t") else None
+        )
+        rows.append({
+            "symbol": sym,
+            "price": round(float(price), 2) if price is not None else None,
+            "rsi": round(metrics["rsi"], 1) if metrics.get("rsi") is not None else None,
+            "setups": hit.get("setups", tags),
+            "volume": int(volume) if volume is not None else None,
+            "average_daily_volume": round(average_volume) if average_volume is not None else None,
+            "close_date": close_date,
+            "liquid": bool(average_volume is not None and average_volume >= MIN_AVG_DAILY_VOLUME),
+            "data_bars": len(bars),
+        })
+    return rows
+
+
+def orb_universe_rows(data, symbols, day, cutoff, min_price, min_volume, hits, daily_data=None):
+    """Return all fetched opening-range charts, not just confirmed breakouts."""
+    hit_symbols = {hit["symbol"] for hit in hits}
+    rows = []
+    for sym in symbols:
+        series = data.get(sym)
+        if not series:
+            continue
+        bars = session_bars(series, day, cutoff)
+        price = bars[-1]["c"] if bars else None
+        intraday_volumes = [bar["v"] for bar in bars if bar["v"] is not None]
+        meta = series.get("meta") or {}
+        volume = sum(intraday_volumes) if intraday_volumes else valid_volume(
+            meta.get("regularMarketVolume")
+        )
+        meta_volume = valid_volume(meta.get("regularMarketVolume"))
+        if volume == 0 and meta_volume:
+            volume = meta_volume
+
+        daily_series = (daily_data or {}).get(sym) or {}
+        daily_volumes = daily_volume_map(daily_series, before_date=day)
+        if volume is None and daily_volumes:
+            volume = daily_volumes[max(daily_volumes)]
+        recent_volumes = [daily_volumes[d] for d in sorted(daily_volumes)][-20:]
+        average_volume = (
+            sum(recent_volumes) / len(recent_volumes)
+            if recent_volumes else volume
+        )
+        closes = [bar["c"] for bar in bars]
+        if not closes:
+            for value in daily_series.get("c") or []:
+                try:
+                    close = float(value)
+                except (TypeError, ValueError):
+                    continue
+                if math.isfinite(close):
+                    closes.append(close)
+        rsi_value = rsi(closes)
+        close_date = (
+            bars[-1]["start"].date().isoformat() if bars else
+            max(daily_volumes).isoformat() if daily_volumes else
+            ts_to_ist(daily_series["t"][-1]).date().isoformat()
+            if daily_series.get("t") else
+            day.isoformat() if volume is not None else None
+        )
+        rows.append({
+            "symbol": sym,
+            "price": round(price, 2) if price is not None else None,
+            "rsi": round(rsi_value, 1) if rsi_value is not None else None,
+            "setups": ["orb"] if sym in hit_symbols else [],
+            "volume": int(volume) if volume is not None else None,
+            "average_daily_volume": round(average_volume) if average_volume is not None else None,
+            "close_date": close_date,
+            "liquid": bool(
+                average_volume is not None
+                and average_volume >= MIN_AVG_DAILY_VOLUME
+            ),
+            "data_bars": len(bars),
+        })
+    return rows
 
 
 # ---------------------------------------------------------------- opening-range breakout
@@ -557,7 +719,7 @@ def session_bars(series, day, cutoff):
         out[ist] = {"start": ist, "c": float(c),
                    "h": None if not hs or hs[i] is None else float(hs[i]),
                    "l": None if not ls or ls[i] is None else float(ls[i]),
-                   "v": (v[i] or 0) if v else 0}
+                   "v": None if not v or v[i] is None else float(v[i])}
     return [out[k] for k in sorted(out)]
 
 
@@ -656,7 +818,10 @@ def scan_orb(stage1, symbols, day, cutoff, or_minutes, min_price=0.0, min_volume
         if not usable(bars, day, cutoff, n_range):
             counts["unusable"] += 1
             continue
-        vol = sum(b["v"] for b in bars) if s.get("v") else (s.get("meta") or {}).get("regularMarketVolume") or 0
+        bar_volumes = [bar["v"] for bar in bars if bar["v"] is not None]
+        vol = sum(bar_volumes) if bar_volumes else (
+            (s.get("meta") or {}).get("regularMarketVolume") or 0
+        )
         if bars[-1]["c"] < min_price or vol < min_volume:
             counts["illiquid"] += 1
             continue
@@ -857,7 +1022,8 @@ def cmd_daily(a):
            "currency": "INR", "universe_source": a.universe_source,
            "as_of": as_of, "universe": len(symbols), "scanned": counts["scanned"], "failed": nfailed,
            "source": "yahoo", "filters": {"min_price": a.min_price, "min_volume": a.min_volume},
-           "note": NOTE, "hits": hits}
+           "note": NOTE, "hits": hits,
+           "stocks": daily_universe_rows(data, symbols, now, a.min_price, a.min_volume)}
     if a.offline:
         doc["offline"] = os.path.basename(a.offline.rstrip("/"))
     if not a.no_write:
@@ -936,6 +1102,11 @@ def cmd_orb(a):
             if len(done) % 50 == 0:
                 progress(a, "  stage 2: %d v8 charts so far" % len(done))
             return parse_chart(yahoo_get(chart_path(sym, rng, "%dm" % BAR_MIN)), sym)
+    if a.offline:
+        daily_data = {}
+    else:
+        progress(a, "Fetching daily bars for average-volume and liquidity metrics...")
+        daily_data, _ = fetch_spark(symbols, "1mo", "1d", a.pause, a)
     hits, counts, failed2 = scan_orb(data, symbols, day, cutoff, a.or_minutes, a.min_price, a.min_volume, confirm,
                                      a.max_confirm)
     failed = dict(failed or {})
@@ -947,7 +1118,10 @@ def cmd_orb(a):
            "as_of": as_of, "universe": len(symbols), "scanned": counts["scanned"], "failed": nfailed,
            "unconfirmed": counts["unconfirmed"], "source": "yahoo", "or_minutes": a.or_minutes,
            "interval": "%dm" % BAR_MIN,
-           "filters": {"min_price": a.min_price, "min_volume": a.min_volume}, "note": NOTE, "hits": hits}
+           "filters": {"min_price": a.min_price, "min_volume": a.min_volume}, "note": NOTE, "hits": hits,
+           "stocks": orb_universe_rows(
+               data, symbols, day, cutoff, a.min_price, a.min_volume, hits, daily_data
+           )}
     if a.offline:
         doc["offline"] = os.path.basename(a.offline.rstrip("/"))
     if not a.no_write:

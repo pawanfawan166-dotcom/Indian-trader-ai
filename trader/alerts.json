@@ -1,0 +1,54 @@
+{
+  "rules": [
+    {
+      "id": "axisbank.ns-plan-stop",
+      "symbol": "AXISBANK.NS",
+      "type": "stop",
+      "price": 1417.75,
+      "note": "plan stop: opening-range midpoint",
+      "date": "2026-11-25"
+    },
+    {
+      "id": "axisbank.ns-plan-target",
+      "symbol": "AXISBANK.NS",
+      "type": "target",
+      "price": 1466.2,
+      "note": "plan target: 2R (two times the risk)",
+      "date": "2026-11-25"
+    },
+    {
+      "id": "axisbank.ns-flat-by",
+      "symbol": "AXISBANK.NS",
+      "type": "time",
+      "at": "15:25",
+      "label": "flat by close",
+      "before_close": true,
+      "date": "2026-11-25"
+    },
+    {
+      "id": "hdfcbank.ns-plan-stop",
+      "symbol": "HDFCBANK.NS",
+      "type": "stop",
+      "price": 840.9,
+      "note": "plan stop: opening-range midpoint",
+      "date": "2026-11-25"
+    },
+    {
+      "id": "hdfcbank.ns-plan-target",
+      "symbol": "HDFCBANK.NS",
+      "type": "target",
+      "price": 864.75,
+      "note": "plan target: 2R (two times the risk)",
+      "date": "2026-11-25"
+    },
+    {
+      "id": "hdfcbank.ns-flat-by",
+      "symbol": "HDFCBANK.NS",
+      "type": "time",
+      "at": "15:25",
+      "label": "flat by close",
+      "before_close": true,
+      "date": "2026-11-25"
+    }
+  ]
+}

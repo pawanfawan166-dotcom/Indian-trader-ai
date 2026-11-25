@@ -46,7 +46,7 @@ reason is one plain line).
 | file | what |
 | --- | --- |
 | `trader/universe.txt` | written by `universe`: symbols from the official NSE equity CSV, with `.NS` suffix and company names |
-| `trader/watchlist.json` | written by `daily` and `orb`: `mode`, `currency` (`INR`), `as_of`, `universe`, `scanned`, `failed`, `hits[]`. trader-news and trader-entry read `hits[].symbol` |
+| `trader/watchlist.json` | written by `daily` and `orb`: `mode`, `currency` (`INR`), `as_of`, `universe`, `scanned`, `failed`, `hits[]`, and `stocks[]` with metrics for every fetched chart, including stocks with no setup hit; existing skills continue to read `hits[].symbol`. Each stock row includes `rsi`, `volume`, `average_daily_volume`, `liquid`, and `close_date` when price/volume data is available. `average_daily_volume` uses up to 20 daily bars; ORB uses its intraday total only when daily bars are unavailable. |
 | `trader/config.json` | read by `orb`: `no_entries_after` (default 15:30) |
 
 ## The universe

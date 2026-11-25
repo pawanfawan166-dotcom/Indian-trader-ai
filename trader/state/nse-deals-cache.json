@@ -1,0 +1,3485 @@
+{
+  "saved_at": "2026-11-25T14:49:51+05:30",
+  "snapshot": {
+    "as_on_date": "23-Nov-2026",
+    "BULK_DEALS_DATA": [
+      {
+        "buySell": "BUY",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ajmera Realty & Inf I Ltd",
+        "qty": "1015117",
+        "remarks": "-",
+        "symbol": "AJMERA",
+        "watp": "163.94"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ajmera Realty & Inf I Ltd",
+        "qty": "1611103",
+        "remarks": "-",
+        "symbol": "AJMERA",
+        "watp": "163.27"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "GRAVITON RESEARCH CAPITAL LLP",
+        "date": "23-Nov-2026",
+        "name": "Apl Apollo Tubes Ltd",
+        "qty": "1993475",
+        "remarks": "-",
+        "symbol": "APLAPOLLO",
+        "watp": "1765.13"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "HRTI PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "BLS Polymers Limited",
+        "qty": "450989",
+        "remarks": "-",
+        "symbol": "BLSPOLY",
+        "watp": "265.54"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "QE SECURITIES LLP",
+        "date": "23-Nov-2026",
+        "name": "BLS Polymers Limited",
+        "qty": "514230",
+        "remarks": "-",
+        "symbol": "BLSPOLY",
+        "watp": "265.09"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "PLUTUS WEALTH MANAGEMENT LLP",
+        "date": "23-Nov-2026",
+        "name": "BLS Polymers Limited",
+        "qty": "401319",
+        "remarks": "-",
+        "symbol": "BLSPOLY",
+        "watp": "264.98"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Commercial Syn Bags Ltd",
+        "qty": "296067",
+        "remarks": "-",
+        "symbol": "COMSYN",
+        "watp": "276.93"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "L7 HITECH PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Eventions Limited",
+        "qty": "4800",
+        "remarks": "-",
+        "symbol": "EVENTIONS",
+        "watp": "52.68"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "GENZ INVESTMENT ADVISORS PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Green Asia Impex Limited",
+        "qty": "155200",
+        "remarks": "-",
+        "symbol": "GREENASIA",
+        "watp": "74.39"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "QE SECURITIES LLP",
+        "date": "23-Nov-2026",
+        "name": "Hi-Tech Pipes Limited",
+        "qty": "1008057",
+        "remarks": "-",
+        "symbol": "HITECH",
+        "watp": "85.48"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "QE SECURITIES LLP",
+        "date": "23-Nov-2026",
+        "name": "HMA Agro Industries Ltd",
+        "qty": "3968561",
+        "remarks": "-",
+        "symbol": "HMAAGRO",
+        "watp": "37.23"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "CLT RESEARCH TECH PRIVATE LTD",
+        "date": "23-Nov-2026",
+        "name": "HMA Agro Industries Ltd",
+        "qty": "4189698",
+        "remarks": "-",
+        "symbol": "HMAAGRO",
+        "watp": "38.28"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "HRTI PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "HMA Agro Industries Ltd",
+        "qty": "3951846",
+        "remarks": "-",
+        "symbol": "HMAAGRO",
+        "watp": "37.84"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "HMA Agro Industries Ltd",
+        "qty": "4099601",
+        "remarks": "-",
+        "symbol": "HMAAGRO",
+        "watp": "37.85"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "HMA Agro Industries Ltd",
+        "qty": "5209491",
+        "remarks": "-",
+        "symbol": "HMAAGRO",
+        "watp": "37.96"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "HMA Agro Industries Ltd",
+        "qty": "6196618",
+        "remarks": "-",
+        "symbol": "HMAAGRO",
+        "watp": "37.58"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "India Glycols Ltd",
+        "qty": "611940",
+        "remarks": "-",
+        "symbol": "INDIAGLYCO",
+        "watp": "295.04"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "IRAGE BROKING SERVICES LLP",
+        "date": "23-Nov-2026",
+        "name": "India Glycols Ltd",
+        "qty": "514548",
+        "remarks": "-",
+        "symbol": "INDIAGLYCO",
+        "watp": "295.73"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "India Glycols Ltd",
+        "qty": "679982",
+        "remarks": "-",
+        "symbol": "INDIAGLYCO",
+        "watp": "295.01"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "India Glycols Ltd",
+        "qty": "846596",
+        "remarks": "-",
+        "symbol": "INDIAGLYCO",
+        "watp": "294.89"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "NK SECURITIES RESEARCH PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "India Glycols Ltd",
+        "qty": "460057",
+        "remarks": "-",
+        "symbol": "INDIAGLYCO",
+        "watp": "295.6"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "INDUS WORLD TRADE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Italian Edibles Limited",
+        "qty": "150000",
+        "remarks": "-",
+        "symbol": "ITALIANE",
+        "watp": "24.45"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Jeena Sikho Lifecare Ltd",
+        "qty": "979426",
+        "remarks": "-",
+        "symbol": "JSLL",
+        "watp": "329.23"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Jeena Sikho Lifecare Ltd",
+        "qty": "1160939",
+        "remarks": "-",
+        "symbol": "JSLL",
+        "watp": "328.7"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Jeena Sikho Lifecare Ltd",
+        "qty": "741165",
+        "remarks": "-",
+        "symbol": "JSLL",
+        "watp": "328.52"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "QE SECURITIES LLP",
+        "date": "23-Nov-2026",
+        "name": "Jeena Sikho Lifecare Ltd",
+        "qty": "875156",
+        "remarks": "-",
+        "symbol": "JSLL",
+        "watp": "327.73"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "BHAVISHYA ECOMMERCE PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Kshitij Polyline Limited",
+        "qty": "200000",
+        "remarks": "-",
+        "symbol": "KSHITIJPOL",
+        "watp": "3.69"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "SATISH MEJIYATAR",
+        "date": "23-Nov-2026",
+        "name": "Kshitij Polyline Limited",
+        "qty": "1304559",
+        "remarks": "-",
+        "symbol": "KSHITIJPOL",
+        "watp": "3.68"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "KADAMBINI SECURITIES PVT LTD",
+        "date": "23-Nov-2026",
+        "name": "Mallcom (India) Limited",
+        "qty": "50000",
+        "remarks": "-",
+        "symbol": "MALLCOM",
+        "watp": "815"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "SAHIL GANDHI",
+        "date": "23-Nov-2026",
+        "name": "Newjaisa Technologies Ltd",
+        "qty": "198000",
+        "remarks": "-",
+        "symbol": "NEWJAISA",
+        "watp": "15.16"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ARTHKUMBH VENTURES LLP",
+        "date": "23-Nov-2026",
+        "name": "Ratnaveer Precision Eng L",
+        "qty": "500000",
+        "remarks": "-",
+        "symbol": "RATNAVEER",
+        "watp": "390.99"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ratnaveer Precision Eng L",
+        "qty": "1290929",
+        "remarks": "-",
+        "symbol": "RATNAVEER",
+        "watp": "391.72"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "SPECTRA REALTIES PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ruchi Infrastructure Ltd.",
+        "qty": "2600000",
+        "remarks": "-",
+        "symbol": "RUCHINFRA",
+        "watp": "5"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Sunshine Pictures Limited",
+        "qty": "205005",
+        "remarks": "-",
+        "symbol": "SUNSHINE",
+        "watp": "510.03"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "PLUTUS WEALTH MANAGEMENT LLP",
+        "date": "23-Nov-2026",
+        "name": "Ugro Capital Limited",
+        "qty": "1028693",
+        "remarks": "-",
+        "symbol": "UGROCAP",
+        "watp": "82.16"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "HRTI PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ugro Capital Limited",
+        "qty": "1509626",
+        "remarks": "-",
+        "symbol": "UGROCAP",
+        "watp": "82.44"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "CLT RESEARCH TECH PRIVATE LTD",
+        "date": "23-Nov-2026",
+        "name": "Ugro Capital Limited",
+        "qty": "879542",
+        "remarks": "-",
+        "symbol": "UGROCAP",
+        "watp": "82.55"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ugro Capital Limited",
+        "qty": "1494343",
+        "remarks": "-",
+        "symbol": "UGROCAP",
+        "watp": "82.65"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "QE SECURITIES LLP",
+        "date": "23-Nov-2026",
+        "name": "Ugro Capital Limited",
+        "qty": "1608545",
+        "remarks": "-",
+        "symbol": "UGROCAP",
+        "watp": "82.25"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ugro Capital Limited",
+        "qty": "1055807",
+        "remarks": "-",
+        "symbol": "UGROCAP",
+        "watp": "82.66"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "K L B SECURITIES PVT LTD",
+        "date": "23-Nov-2026",
+        "name": "Vineet Laboratories Ltd",
+        "qty": "43",
+        "remarks": "-",
+        "symbol": "VINEETLAB",
+        "watp": "38.79"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "NEHA BAGLA",
+        "date": "23-Nov-2026",
+        "name": "Voler Car Limited",
+        "qty": "65600",
+        "remarks": "-",
+        "symbol": "VOLERCAR",
+        "watp": "279.45"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ORION STOCKS LTD",
+        "date": "23-Nov-2026",
+        "name": "WE WIN LIMITED",
+        "qty": "10479",
+        "remarks": "-",
+        "symbol": "WEWIN",
+        "watp": "44.47"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ajmera Realty & Inf I Ltd",
+        "qty": "1611103",
+        "remarks": "-",
+        "symbol": "AJMERA",
+        "watp": "163.39"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ajmera Realty & Inf I Ltd",
+        "qty": "1015117",
+        "remarks": "-",
+        "symbol": "AJMERA",
+        "watp": "164.12"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "GRAVITON RESEARCH CAPITAL LLP",
+        "date": "23-Nov-2026",
+        "name": "Apl Apollo Tubes Ltd",
+        "qty": "2014740",
+        "remarks": "-",
+        "symbol": "APLAPOLLO",
+        "watp": "1763.63"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "HRTI PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "BLS Polymers Limited",
+        "qty": "483085",
+        "remarks": "-",
+        "symbol": "BLSPOLY",
+        "watp": "265.97"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "QE SECURITIES LLP",
+        "date": "23-Nov-2026",
+        "name": "BLS Polymers Limited",
+        "qty": "495497",
+        "remarks": "-",
+        "symbol": "BLSPOLY",
+        "watp": "265.35"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "PLUTUS WEALTH MANAGEMENT LLP",
+        "date": "23-Nov-2026",
+        "name": "BLS Polymers Limited",
+        "qty": "401319",
+        "remarks": "-",
+        "symbol": "BLSPOLY",
+        "watp": "265.14"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Commercial Syn Bags Ltd",
+        "qty": "417790",
+        "remarks": "-",
+        "symbol": "COMSYN",
+        "watp": "279.87"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "RUPARAM HAKARAM CHOUDHARY",
+        "date": "23-Nov-2026",
+        "name": "DHARAN INFRA-EPC LIMITED",
+        "qty": "26400000",
+        "remarks": "-",
+        "symbol": "DHARAN",
+        "watp": "0.12"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "L7 HITECH PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Eventions Limited",
+        "qty": "84000",
+        "remarks": "-",
+        "symbol": "EVENTIONS",
+        "watp": "53.5"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "NITYANAND KUMAWAT",
+        "date": "23-Nov-2026",
+        "name": "Gensol Engineering Ltd",
+        "qty": "303994",
+        "remarks": "-",
+        "symbol": "GENSOL",
+        "watp": "9.07"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "QE SECURITIES LLP",
+        "date": "23-Nov-2026",
+        "name": "Hi-Tech Pipes Limited",
+        "qty": "1052577",
+        "remarks": "-",
+        "symbol": "HITECH",
+        "watp": "85.99"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "CLT RESEARCH TECH PRIVATE LTD",
+        "date": "23-Nov-2026",
+        "name": "HMA Agro Industries Ltd",
+        "qty": "4189698",
+        "remarks": "-",
+        "symbol": "HMAAGRO",
+        "watp": "38.3"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "HRTI PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "HMA Agro Industries Ltd",
+        "qty": "3999229",
+        "remarks": "-",
+        "symbol": "HMAAGRO",
+        "watp": "37.83"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "HMA Agro Industries Ltd",
+        "qty": "4095454",
+        "remarks": "-",
+        "symbol": "HMAAGRO",
+        "watp": "37.88"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "HMA Agro Industries Ltd",
+        "qty": "6196618",
+        "remarks": "-",
+        "symbol": "HMAAGRO",
+        "watp": "37.58"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "HMA Agro Industries Ltd",
+        "qty": "5209491",
+        "remarks": "-",
+        "symbol": "HMAAGRO",
+        "watp": "37.97"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "QE SECURITIES LLP",
+        "date": "23-Nov-2026",
+        "name": "HMA Agro Industries Ltd",
+        "qty": "4175255",
+        "remarks": "-",
+        "symbol": "HMAAGRO",
+        "watp": "37.6"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "NK SECURITIES RESEARCH PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "India Glycols Ltd",
+        "qty": "460057",
+        "remarks": "-",
+        "symbol": "INDIAGLYCO",
+        "watp": "295.77"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "India Glycols Ltd",
+        "qty": "607117",
+        "remarks": "-",
+        "symbol": "INDIAGLYCO",
+        "watp": "295.12"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "IRAGE BROKING SERVICES LLP",
+        "date": "23-Nov-2026",
+        "name": "India Glycols Ltd",
+        "qty": "472068",
+        "remarks": "-",
+        "symbol": "INDIAGLYCO",
+        "watp": "294.94"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "India Glycols Ltd",
+        "qty": "846596",
+        "remarks": "-",
+        "symbol": "INDIAGLYCO",
+        "watp": "295.03"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "India Glycols Ltd",
+        "qty": "679982",
+        "remarks": "-",
+        "symbol": "INDIAGLYCO",
+        "watp": "295.23"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "SACHIN GOVINDLAL MODI",
+        "date": "23-Nov-2026",
+        "name": "Italian Edibles Limited",
+        "qty": "138000",
+        "remarks": "-",
+        "symbol": "ITALIANE",
+        "watp": "24.46"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "AKSHAY MAKHIJA",
+        "date": "23-Nov-2026",
+        "name": "Italian Edibles Limited",
+        "qty": "100000",
+        "remarks": "-",
+        "symbol": "ITALIANE",
+        "watp": "24.45"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Jeena Sikho Lifecare Ltd",
+        "qty": "979426",
+        "remarks": "-",
+        "symbol": "JSLL",
+        "watp": "329.41"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Jeena Sikho Lifecare Ltd",
+        "qty": "1160939",
+        "remarks": "-",
+        "symbol": "JSLL",
+        "watp": "328.87"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Jeena Sikho Lifecare Ltd",
+        "qty": "741388",
+        "remarks": "-",
+        "symbol": "JSLL",
+        "watp": "328.7"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "QE SECURITIES LLP",
+        "date": "23-Nov-2026",
+        "name": "Jeena Sikho Lifecare Ltd",
+        "qty": "857062",
+        "remarks": "-",
+        "symbol": "JSLL",
+        "watp": "328.69"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "SATISH MEJIYATAR",
+        "date": "23-Nov-2026",
+        "name": "Kshitij Polyline Limited",
+        "qty": "400000",
+        "remarks": "-",
+        "symbol": "KSHITIJPOL",
+        "watp": "3.69"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "BHAVISHYA ECOMMERCE PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Kshitij Polyline Limited",
+        "qty": "1718211",
+        "remarks": "-",
+        "symbol": "KSHITIJPOL",
+        "watp": "3.69"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "STEADVIEW CAPITAL MAURITIUS LIMITED-FDI",
+        "date": "23-Nov-2026",
+        "name": "Lenskart Solutions Ltd",
+        "qty": "11520222",
+        "remarks": "-",
+        "symbol": "LENSKART",
+        "watp": "725"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "GEE BEE SECURITIES PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Mallcom (India) Limited",
+        "qty": "50000",
+        "remarks": "-",
+        "symbol": "MALLCOM",
+        "watp": "815"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "PEGASUS GROWTH FUND 1",
+        "date": "23-Nov-2026",
+        "name": "Newjaisa Technologies Ltd",
+        "qty": "237000",
+        "remarks": "-",
+        "symbol": "NEWJAISA",
+        "watp": "15.22"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "CAPRI GLOBAL VENTURES PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Pokarna Limited",
+        "qty": "225000",
+        "remarks": "-",
+        "symbol": "POKARNA",
+        "watp": "660.2"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ratnaveer Precision Eng L",
+        "qty": "1077569",
+        "remarks": "-",
+        "symbol": "RATNAVEER",
+        "watp": "393.68"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "INDIVAR FOUNDATION",
+        "date": "23-Nov-2026",
+        "name": "Ruchi Infrastructure Ltd.",
+        "qty": "2600000",
+        "remarks": "-",
+        "symbol": "RUCHINFRA",
+        "watp": "5"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Sunshine Pictures Limited",
+        "qty": "265462",
+        "remarks": "-",
+        "symbol": "SUNSHINE",
+        "watp": "517.59"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "PLUTUS WEALTH MANAGEMENT LLP",
+        "date": "23-Nov-2026",
+        "name": "Ugro Capital Limited",
+        "qty": "1028693",
+        "remarks": "-",
+        "symbol": "UGROCAP",
+        "watp": "82.26"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "CLT RESEARCH TECH PRIVATE LTD",
+        "date": "23-Nov-2026",
+        "name": "Ugro Capital Limited",
+        "qty": "879542",
+        "remarks": "-",
+        "symbol": "UGROCAP",
+        "watp": "82.58"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "NEWQUEST ASIA INVESTMENTS III LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ugro Capital Limited",
+        "qty": "1017257",
+        "remarks": "-",
+        "symbol": "UGROCAP",
+        "watp": "82.51"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "HRTI PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ugro Capital Limited",
+        "qty": "1502116",
+        "remarks": "-",
+        "symbol": "UGROCAP",
+        "watp": "82.58"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "QE SECURITIES LLP",
+        "date": "23-Nov-2026",
+        "name": "Ugro Capital Limited",
+        "qty": "1646204",
+        "remarks": "-",
+        "symbol": "UGROCAP",
+        "watp": "82.47"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ugro Capital Limited",
+        "qty": "1494412",
+        "remarks": "-",
+        "symbol": "UGROCAP",
+        "watp": "82.73"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Ugro Capital Limited",
+        "qty": "1055807",
+        "remarks": "-",
+        "symbol": "UGROCAP",
+        "watp": "82.7"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "K L B SECURITIES PVT LTD",
+        "date": "23-Nov-2026",
+        "name": "Vineet Laboratories Ltd",
+        "qty": "100043",
+        "remarks": "-",
+        "symbol": "VINEETLAB",
+        "watp": "38.55"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ORION STOCKS LTD",
+        "date": "23-Nov-2026",
+        "name": "WE WIN LIMITED",
+        "qty": "55450",
+        "remarks": "-",
+        "symbol": "WEWIN",
+        "watp": "44.89"
+      }
+    ],
+    "BULK_DEALS": "89",
+    "SHORT_DEALS": "253",
+    "BLOCK_DEALS": "5",
+    "SHORT_DEALS_DATA": [
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "360 ONE WAM LIMITED",
+        "qty": "1000",
+        "remarks": null,
+        "symbol": "360ONE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ABB LTD.",
+        "qty": "1244",
+        "remarks": null,
+        "symbol": "ABB",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ADITYA BIRLA CAPITAL LIMITED",
+        "qty": "3200",
+        "remarks": null,
+        "symbol": "ABCAPITAL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ADANI ENERGY SOLUTION LTD",
+        "qty": "1352",
+        "remarks": null,
+        "symbol": "ADANIENSOL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ADANI ENTERPRISES LIMITED",
+        "qty": "928",
+        "remarks": null,
+        "symbol": "ADANIENT",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ADANI GREEN ENERGY LTD",
+        "qty": "2509",
+        "remarks": null,
+        "symbol": "ADANIGREEN",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ADANI PORT & SEZ LTD",
+        "qty": "6789",
+        "remarks": null,
+        "symbol": "ADANIPORTS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ADANI POWER LTD",
+        "qty": "117151",
+        "remarks": null,
+        "symbol": "ADANIPOWER",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "AETHER INDUSTRIES LIMITED",
+        "qty": "25",
+        "remarks": null,
+        "symbol": "AETHER",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "AJANTA PHARMA LIMITED",
+        "qty": "20",
+        "remarks": null,
+        "symbol": "AJANTPHARM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ALKYL AMINES CHEM. LTD",
+        "qty": "2",
+        "remarks": null,
+        "symbol": "ALKYLAMINE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "AMBER ENTERPRISES (I) LTD",
+        "qty": "1006",
+        "remarks": null,
+        "symbol": "AMBER",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "AMBUJA CEMENTS LTD",
+        "qty": "4600",
+        "remarks": null,
+        "symbol": "AMBUJACEM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ANAND RATHI WEALTH LTD",
+        "qty": "1250",
+        "remarks": null,
+        "symbol": "ANANDRATHI",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ANGEL ONE LTD",
+        "qty": "13700",
+        "remarks": null,
+        "symbol": "ANGELONE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "APL APOLLO TUBES LTD",
+        "qty": "1612",
+        "remarks": null,
+        "symbol": "APLAPOLLO",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "APOLLO HOSPITALS ENTERPRISE LIMITED",
+        "qty": "1049",
+        "remarks": null,
+        "symbol": "APOLLOHOSP",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ASHAPURA MINECHEM LTD",
+        "qty": "3",
+        "remarks": null,
+        "symbol": "ASHAPURMIN",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ASHOKA BUILDCON LTD      ",
+        "qty": "506",
+        "remarks": null,
+        "symbol": "ASHOKA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ASHOK LEYLAND LTD",
+        "qty": "40000",
+        "remarks": null,
+        "symbol": "ASHOKLEY",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ASIAN PAINTS LIMITED",
+        "qty": "1984",
+        "remarks": null,
+        "symbol": "ASIANPAINT",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ASTRAL POLY TECHNIK LIMITED",
+        "qty": "1275",
+        "remarks": null,
+        "symbol": "ASTRAL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ATHER ENERGY LIMITED",
+        "qty": "8613",
+        "remarks": null,
+        "symbol": "ATHERENERG",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "AU SMALL FINANCE BANK LIMITED",
+        "qty": "1399",
+        "remarks": null,
+        "symbol": "AUBANK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "AUROBINDO PHARMA LTD",
+        "qty": "2200",
+        "remarks": null,
+        "symbol": "AUROPHARMA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ADANI WILMAR LIMITED",
+        "qty": "171",
+        "remarks": null,
+        "symbol": "AWL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "AXIS BANK LIMITED",
+        "qty": "18351",
+        "remarks": null,
+        "symbol": "AXISBANK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "AXISCADES ENGG TECH LTD  ",
+        "qty": "3",
+        "remarks": null,
+        "symbol": "AXISCADES",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BAJAJ AUTO LIMITED",
+        "qty": "150",
+        "remarks": null,
+        "symbol": "BAJAJ-AUTO",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BAJAJ FINSERV LIMITED",
+        "qty": "300",
+        "remarks": null,
+        "symbol": "BAJAJFINSV",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BAJAJ FINANCE LIMITED",
+        "qty": "10905",
+        "remarks": null,
+        "symbol": "BAJFINANCE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BANDHAN BANK LIMITED",
+        "qty": "3604",
+        "remarks": null,
+        "symbol": "BANDHANBNK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BANK OF BARODA",
+        "qty": "18080",
+        "remarks": null,
+        "symbol": "BANKBARODA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BANK OF INDIA",
+        "qty": "10400",
+        "remarks": null,
+        "symbol": "BANKINDIA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BATA INDIA LTD",
+        "qty": "50",
+        "remarks": null,
+        "symbol": "BATAINDIA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BHARAT ELECTRONICS LTD",
+        "qty": "4275",
+        "remarks": null,
+        "symbol": "BEL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BEML LIMITED",
+        "qty": "50",
+        "remarks": null,
+        "symbol": "BEML",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BHARAT FORGE LTD",
+        "qty": "500",
+        "remarks": null,
+        "symbol": "BHARATFORG",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BHARTI AIRTEL LIMITED",
+        "qty": "12006",
+        "remarks": null,
+        "symbol": "BHARTIARTL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BHEL",
+        "qty": "13349",
+        "remarks": null,
+        "symbol": "BHEL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BIOCON LIMITED.",
+        "qty": "5282",
+        "remarks": null,
+        "symbol": "BIOCON",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BLUE STAR LIMITED",
+        "qty": "6024",
+        "remarks": null,
+        "symbol": "BLUESTARCO",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BOSCH LIMITED",
+        "qty": "75",
+        "remarks": null,
+        "symbol": "BOSCHLTD",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BHARAT PETROLEUM CORP  LT",
+        "qty": "4100",
+        "remarks": null,
+        "symbol": "BPCL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BSE LIMITED",
+        "qty": "2356",
+        "remarks": null,
+        "symbol": "BSE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "COMPUTER AGE MGMT SER LTD",
+        "qty": "7",
+        "remarks": null,
+        "symbol": "CAMS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "CANARA BANK",
+        "qty": "21320",
+        "remarks": null,
+        "symbol": "CANBK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "CARTRADE TECH LIMITED",
+        "qty": "61",
+        "remarks": null,
+        "symbol": "CARTRADE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "CENTRAL DEPOSITORY SERVICES (INDIA) LIMITED",
+        "qty": "3800",
+        "remarks": null,
+        "symbol": "CDSL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "CELLO WORLD LIMITED",
+        "qty": "1",
+        "remarks": null,
+        "symbol": "CELLO",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "CG POWER AND INDUSTRIAL SOLUTIONS LIMITED",
+        "qty": "1700",
+        "remarks": null,
+        "symbol": "CGPOWER",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "CHOLAMANDALAM IN & FIN CO",
+        "qty": "3125",
+        "remarks": null,
+        "symbol": "CHOLAFIN",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "CIPLA LTD",
+        "qty": "2125",
+        "remarks": null,
+        "symbol": "CIPLA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "COALINDIA",
+        "qty": "6750",
+        "remarks": null,
+        "symbol": "COALINDIA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "COCHIN SHIPYARD LIMITED",
+        "qty": "1200",
+        "remarks": null,
+        "symbol": "COCHINSHIP",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "COFORGE LIMITED",
+        "qty": "4383",
+        "remarks": null,
+        "symbol": "COFORGE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "COLGATE PALMOLIVE LTD.",
+        "qty": "1370",
+        "remarks": null,
+        "symbol": "COLPAL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "CONTAINER CORP OF IND LTD",
+        "qty": "2500",
+        "remarks": null,
+        "symbol": "CONCOR",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "CROMPT GREA CON ELEC LTD  ",
+        "qty": "2151",
+        "remarks": null,
+        "symbol": "CROMPTON",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "CITY UNION BANK LTD      ",
+        "qty": "2326",
+        "remarks": null,
+        "symbol": "CUB",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "CUMMINS INDIA LTD",
+        "qty": "230",
+        "remarks": null,
+        "symbol": "CUMMINSIND",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "DABUR INDIA LTD",
+        "qty": "55005",
+        "remarks": null,
+        "symbol": "DABUR",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "DALMIA BHARAT LIMITED",
+        "qty": "16",
+        "remarks": null,
+        "symbol": "DALBHARAT",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "DATA PATTERNS INDIA LTD",
+        "qty": "125",
+        "remarks": null,
+        "symbol": "DATAPATTNS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "DIVI'S LABORATORIES LTD",
+        "qty": "700",
+        "remarks": null,
+        "symbol": "DIVISLAB",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "DIXON TECHNO (INDIA) LTD",
+        "qty": "1152",
+        "remarks": null,
+        "symbol": "DIXON",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "DLF LIMITED",
+        "qty": "11050",
+        "remarks": null,
+        "symbol": "DLF",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "AVENUE SUPERMARTS LIMITED",
+        "qty": "450",
+        "remarks": null,
+        "symbol": "DMART",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "DR. REDDY'S LABORATORIES",
+        "qty": "5699",
+        "remarks": null,
+        "symbol": "DRREDDY",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "EICHER MOTORS LIMITED",
+        "qty": "506",
+        "remarks": null,
+        "symbol": "EICHERMOT",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "EIH LIMITED",
+        "qty": "8",
+        "remarks": null,
+        "symbol": "EIHOTEL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "EMCURE PHARMACEUTICALS L",
+        "qty": "44",
+        "remarks": null,
+        "symbol": "EMCURE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SIEMENS ENERGY INDIA LTD",
+        "qty": "175",
+        "remarks": null,
+        "symbol": "ENRIN",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ETERNAL LIMITED",
+        "qty": "37429",
+        "remarks": null,
+        "symbol": "ETERNAL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "FEDERAL BANK LTD",
+        "qty": "10000",
+        "remarks": null,
+        "symbol": "FEDERALBNK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "FIRSTSOURCE SOLU. LTD.",
+        "qty": "201",
+        "remarks": null,
+        "symbol": "FSL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "GAIL (INDIA) LTD",
+        "qty": "17932",
+        "remarks": null,
+        "symbol": "GAIL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "GLENMARK PHARMACEUTICALS LIMITED",
+        "qty": "3377",
+        "remarks": null,
+        "symbol": "GLENMARK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "GMR AIRPORTS LIMITED",
+        "qty": "34878",
+        "remarks": null,
+        "symbol": "GMRAIRPORT",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "GODREJ PROPERTIES LTD",
+        "qty": "2324",
+        "remarks": null,
+        "symbol": "GODREJPROP",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "GRASIM INDUSTRIES LTD",
+        "qty": "500",
+        "remarks": null,
+        "symbol": "GRASIM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "BILLIONBRAINS GARAGE VN L",
+        "qty": "5",
+        "remarks": null,
+        "symbol": "GROWW",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "GARDEN REACH SHIP&ENG LTD",
+        "qty": "20",
+        "remarks": null,
+        "symbol": "GRSE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "GE VERNOVA T&D INDIA LTD",
+        "qty": "250",
+        "remarks": null,
+        "symbol": "GVT&D",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HINDUSTAN AERONAUTICS LTD",
+        "qty": "1",
+        "remarks": null,
+        "symbol": "HAL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HAPPIEST MINDS TECHNO LTD",
+        "qty": "67",
+        "remarks": null,
+        "symbol": "HAPPSTMNDS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HCL TECHNOLOGIES LTD",
+        "qty": "885",
+        "remarks": null,
+        "symbol": "HCLTECH",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HDFC AMC LIMITED",
+        "qty": "4200",
+        "remarks": null,
+        "symbol": "HDFCAMC",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HDFC BANK LTD",
+        "qty": "56325",
+        "remarks": null,
+        "symbol": "HDFCBANK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HDFC STANDARD LIFE INSURANCE COMPANY LIMITED",
+        "qty": "40780",
+        "remarks": null,
+        "symbol": "HDFCLIFE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HERITAGE FOODS LTD    ",
+        "qty": "1",
+        "remarks": null,
+        "symbol": "HERITGFOOD",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HERO MOTOCORP LTD",
+        "qty": "1200",
+        "remarks": null,
+        "symbol": "HEROMOTOCO",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HINDALCO  INDUSTRIES  LTD",
+        "qty": "700",
+        "remarks": null,
+        "symbol": "HINDALCO",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HINDUSTAN PETROLEUM CORP",
+        "qty": "36471",
+        "remarks": null,
+        "symbol": "HINDPETRO",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HINDUSTAN UNILEVER LTD.",
+        "qty": "3593",
+        "remarks": null,
+        "symbol": "HINDUNILVR",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HINDUSTAN ZINC LIMITED",
+        "qty": "3640",
+        "remarks": null,
+        "symbol": "HINDZINC",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HUBTOWN LIMITED",
+        "qty": "1",
+        "remarks": null,
+        "symbol": "HUBTOWN",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "HYUNDAI MOTOR INDIA LTD",
+        "qty": "1496",
+        "remarks": null,
+        "symbol": "HYUNDAI",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ICICI BANK LTD.",
+        "qty": "743354",
+        "remarks": null,
+        "symbol": "ICICIBANK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ICICI LOMBARD GENERAL INSURANCE COMPANY LIMITED",
+        "qty": "1615",
+        "remarks": null,
+        "symbol": "ICICIGI",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "Vodafone Idea Limited",
+        "qty": "285911",
+        "remarks": null,
+        "symbol": "IDEA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "IDFC FIRST BANK LIMI",
+        "qty": "9562",
+        "remarks": null,
+        "symbol": "IDFCFIRSTB",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "INDIAN ENERGY EXCHANGE LIMITED",
+        "qty": "63512",
+        "remarks": null,
+        "symbol": "IEX",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "INDEGENE LIMITED",
+        "qty": "7",
+        "remarks": null,
+        "symbol": "INDGN",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "THE INDIAN HOTELS CO. LTD",
+        "qty": "56976",
+        "remarks": null,
+        "symbol": "INDHOTEL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "INDIAN BANK",
+        "qty": "4200",
+        "remarks": null,
+        "symbol": "INDIANB",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "INTERGLOBE AVIATION LTD  ",
+        "qty": "4200",
+        "remarks": null,
+        "symbol": "INDIGO",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "INDUSIND BANK LIMITED",
+        "qty": "5586",
+        "remarks": null,
+        "symbol": "INDUSINDBK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "INDUS",
+        "qty": "1700",
+        "remarks": null,
+        "symbol": "INDUSTOWER",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "INFOSYS TECHNOLOGIES LTD",
+        "qty": "2755",
+        "remarks": null,
+        "symbol": "INFY",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "INOX INDIA LIMITED",
+        "qty": "2",
+        "remarks": null,
+        "symbol": "INOXINDIA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "INOX WIND LIMITED        ",
+        "qty": "12799",
+        "remarks": null,
+        "symbol": "INOXWIND",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "INDIAN OIL CORP LTD",
+        "qty": "181121",
+        "remarks": null,
+        "symbol": "IOC",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "INDIAN RENEWABLE ENERGY",
+        "qty": "158329",
+        "remarks": null,
+        "symbol": "IREDA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "IRFC",
+        "qty": "10850",
+        "remarks": null,
+        "symbol": "IRFC",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ITC LTD",
+        "qty": "75164",
+        "remarks": null,
+        "symbol": "ITC",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ITC HOTELS LIMITED",
+        "qty": "4",
+        "remarks": null,
+        "symbol": "ITCHOTELS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ITI LTD",
+        "qty": "136",
+        "remarks": null,
+        "symbol": "ITI",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "JINDAL STEEL & POWER LTD",
+        "qty": "18",
+        "remarks": null,
+        "symbol": "JINDALSTEL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "JIO FIN SERVICES LTD",
+        "qty": "34000",
+        "remarks": null,
+        "symbol": "JIOFIN",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "JEENA SIKHO LIFECARE LTD",
+        "qty": "4",
+        "remarks": null,
+        "symbol": "JSLL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "JSW ENERGY LIMITED",
+        "qty": "1075",
+        "remarks": null,
+        "symbol": "JSWENERGY",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "JSW INFRASTRUCTURE LTD",
+        "qty": "3",
+        "remarks": null,
+        "symbol": "JSWINFRA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "JUBILANT FOODWORKS LTD",
+        "qty": "7500",
+        "remarks": null,
+        "symbol": "JUBLFOOD",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "KALYAN JEWELLERS IND LTD",
+        "qty": "10765",
+        "remarks": null,
+        "symbol": "KALYANKJIL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "KAYNES TECHNOLOGY IND LTD",
+        "qty": "168",
+        "remarks": null,
+        "symbol": "KAYNES",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "KEC INTL. LIMITED        ",
+        "qty": "1353",
+        "remarks": null,
+        "symbol": "KEC",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "KEI INDUSTRIES LTD.      ",
+        "qty": "700",
+        "remarks": null,
+        "symbol": "KEI",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "KFIN TECHNOLOGIES LIMITED",
+        "qty": "5550",
+        "remarks": null,
+        "symbol": "KFINTECH",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "KRISHNA INST OF MED SCI L",
+        "qty": "1",
+        "remarks": null,
+        "symbol": "KIMS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "KOTAK MAHINDRA BANK LTD",
+        "qty": "17922",
+        "remarks": null,
+        "symbol": "KOTAKBANK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "KPIT TECHNOLOGIES LTD",
+        "qty": "3459",
+        "remarks": null,
+        "symbol": "KPITTECH",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "KSH INTERNATIONAL LIMITED",
+        "qty": "2",
+        "remarks": null,
+        "symbol": "KSHINTL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "LAURUS LABS LIMITED",
+        "qty": "7650",
+        "remarks": null,
+        "symbol": "LAURUSLABS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "LENSKART SOLUTIONS LTD",
+        "qty": "2",
+        "remarks": null,
+        "symbol": "LENSKART",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "LIC HOUSING FINANCE LTD",
+        "qty": "1193",
+        "remarks": null,
+        "symbol": "LICHSGFIN",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "LIFE INSURA CORP OF INDIA",
+        "qty": "2927",
+        "remarks": null,
+        "symbol": "LICI",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "LODHA",
+        "qty": "10628",
+        "remarks": null,
+        "symbol": "LODHA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "LARSEN & TOUBRO LTD.",
+        "qty": "18485",
+        "remarks": null,
+        "symbol": "LT",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "L&T FINANCE LIMITED",
+        "qty": "8999",
+        "remarks": null,
+        "symbol": "LTF",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "LTIMINDTREE LIMITED",
+        "qty": "659",
+        "remarks": null,
+        "symbol": "LTM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MAHINDRA & MAHINDRA LTD",
+        "qty": "6000",
+        "remarks": null,
+        "symbol": "M&M",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MAHABANK",
+        "qty": "26505",
+        "remarks": null,
+        "symbol": "MAHABANK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MANAPPURAM FINANCE LTD",
+        "qty": "21283",
+        "remarks": null,
+        "symbol": "MANAPPURAM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MANKIND PHARMA LIMITED",
+        "qty": "250",
+        "remarks": null,
+        "symbol": "MANKIND",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MARICO LIMITED",
+        "qty": "42795",
+        "remarks": null,
+        "symbol": "MARICO",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MARUTI SUZUKI INDIA LTD.",
+        "qty": "8834",
+        "remarks": null,
+        "symbol": "MARUTI",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MAX HEALTHCARE INS LTD",
+        "qty": "5775",
+        "remarks": null,
+        "symbol": "MAXHEALTH",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MAZAGON DOCK SHIPBUIL LTD",
+        "qty": "389",
+        "remarks": null,
+        "symbol": "MAZDOCK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MULTI COMMODITY EXCHANGE OF INDIA LIMITED",
+        "qty": "1802",
+        "remarks": null,
+        "symbol": "MCX",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MAX FINANCIAL SERV LTD",
+        "qty": "1600",
+        "remarks": null,
+        "symbol": "MFSL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MOTILALAMC - MOREALTY",
+        "qty": "1",
+        "remarks": null,
+        "symbol": "MOREALTY",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SAMVRDHNA MTHRSN INT",
+        "qty": "102550",
+        "remarks": null,
+        "symbol": "MOTHERSON",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MOTILAL OSWAL FIN LTD   ",
+        "qty": "8935",
+        "remarks": null,
+        "symbol": "MOTILALOFS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MPHASIS LIMITED",
+        "qty": "1100",
+        "remarks": null,
+        "symbol": "MPHASIS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "MUTHOOT FINANCE LIMITED",
+        "qty": "242",
+        "remarks": null,
+        "symbol": "MUTHOOTFIN",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "NATCO PHARMA LIMITED",
+        "qty": "1",
+        "remarks": null,
+        "symbol": "NATCOPHARM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "NATIONAL ALUMINIUM CO LTD",
+        "qty": "7501",
+        "remarks": null,
+        "symbol": "NATIONALUM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "INFO EDGE (I) LTD",
+        "qty": "5430",
+        "remarks": null,
+        "symbol": "NAUKRI",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "NAVIN FLUORINE INT. LTD",
+        "qty": "300",
+        "remarks": null,
+        "symbol": "NAVINFLUOR",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "NCC LIMITED",
+        "qty": "414",
+        "remarks": null,
+        "symbol": "NCC",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "NESTLE INDIA LIMITED",
+        "qty": "10000",
+        "remarks": null,
+        "symbol": "NESTLEIND",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "NHPC LTD",
+        "qty": "13900",
+        "remarks": null,
+        "symbol": "NHPC",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "NITIN SPINNERS LIMITED",
+        "qty": "277",
+        "remarks": null,
+        "symbol": "NITINSPIN",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "NMDC LTD.",
+        "qty": "4250",
+        "remarks": null,
+        "symbol": "NMDC",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "NMDC STEEL LIMITED",
+        "qty": "53",
+        "remarks": null,
+        "symbol": "NSLNISP",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "NTPC LTD",
+        "qty": "15987",
+        "remarks": null,
+        "symbol": "NTPC",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "FSN E COMMERCE VENTURES",
+        "qty": "28125",
+        "remarks": null,
+        "symbol": "NYKAA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "OBEROI REALTY LIMITED",
+        "qty": "1090",
+        "remarks": null,
+        "symbol": "OBEROIRLTY",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "Oracle Financial Services Software Limited",
+        "qty": "150",
+        "remarks": null,
+        "symbol": "OFSS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "OIL INDIA LTD",
+        "qty": "8400",
+        "remarks": null,
+        "symbol": "OIL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "OIL AND NATURAL GAS CORP.",
+        "qty": "3573",
+        "remarks": null,
+        "symbol": "ONGC",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PATANJALI FOODS LIMITED",
+        "qty": "5950",
+        "remarks": null,
+        "symbol": "PATANJALI",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ONE 97 COMMUNICATIONS LTD",
+        "qty": "2175",
+        "remarks": null,
+        "symbol": "PAYTM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PENNAR INDUSTRIES LTD",
+        "qty": "1",
+        "remarks": null,
+        "symbol": "PENIND",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PERSISTENT SYSTEMS LTD",
+        "qty": "326",
+        "remarks": null,
+        "symbol": "PERSISTENT",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PETRONET LNG LIMITED",
+        "qty": "13300",
+        "remarks": null,
+        "symbol": "PETRONET",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "POWER FIN CORP LTD.",
+        "qty": "3400",
+        "remarks": null,
+        "symbol": "PFC",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PG ELECTROPLAST LTD",
+        "qty": "1918",
+        "remarks": null,
+        "symbol": "PGEL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "THE PHOENIX MILLS LIMITED",
+        "qty": "2093",
+        "remarks": null,
+        "symbol": "PHOENIXLTD",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PIDILITE INDUSTRIES LIMITED",
+        "qty": "2000",
+        "remarks": null,
+        "symbol": "PIDILITIND",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PI INDUSTRIES LTD        ",
+        "qty": "175",
+        "remarks": null,
+        "symbol": "PIIND",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PUNJAB NATIONAL BANK",
+        "qty": "74450",
+        "remarks": null,
+        "symbol": "PNB",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PNB HOUSING FIN LTD.   ",
+        "qty": "2908",
+        "remarks": null,
+        "symbol": "PNBHOUSING",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PB FINTECH LIMITED",
+        "qty": "12001",
+        "remarks": null,
+        "symbol": "POLICYBZR",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "POWER GRID CORP. LTD.",
+        "qty": "1900",
+        "remarks": null,
+        "symbol": "POWERGRID",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ABB POWER PRO N SYS IND L",
+        "qty": "750",
+        "remarks": null,
+        "symbol": "POWERINDIA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PREMIER ENERGIES LIMITED",
+        "qty": "651",
+        "remarks": null,
+        "symbol": "PREMIERENE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PRESTIGE ESTATES PROJECTS LIMITED",
+        "qty": "900",
+        "remarks": null,
+        "symbol": "PRESTIGE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PRINCEPIPE",
+        "qty": "700",
+        "remarks": null,
+        "symbol": "PRINCEPIPE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "PRUDENT CORP ADV SER LTD",
+        "qty": "64",
+        "remarks": null,
+        "symbol": "PRUDENT",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "RADICO KHAITAN LIMITED",
+        "qty": "450",
+        "remarks": null,
+        "symbol": "RADICO",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "RAILTEL",
+        "qty": "1",
+        "remarks": null,
+        "symbol": "RAILTEL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "RBL BANK LIMITED    ",
+        "qty": "92286",
+        "remarks": null,
+        "symbol": "RBLBANK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "RURAL ELEC CORP. LTD.",
+        "qty": "8750",
+        "remarks": null,
+        "symbol": "RECLTD",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "RELIANCE INDUSTRIES LTD",
+        "qty": "24575",
+        "remarks": null,
+        "symbol": "RELIANCE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "RHI MAGNESITA INDIA LTD",
+        "qty": "214",
+        "remarks": null,
+        "symbol": "RHIM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "RVNL",
+        "qty": "11169",
+        "remarks": null,
+        "symbol": "RVNL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SAGILITY INDIA LIMITED",
+        "qty": "108160",
+        "remarks": null,
+        "symbol": "SAGILITY",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "STEEL AUTHORITY OF INDIA",
+        "qty": "14100",
+        "remarks": null,
+        "symbol": "SAIL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SAMBHV STEEL TUBES LTD",
+        "qty": "1000",
+        "remarks": null,
+        "symbol": "SAMBHV",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SAMMAAN CAPITAL LIMITED",
+        "qty": "3",
+        "remarks": null,
+        "symbol": "SAMMAANCAP",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SBI CARDS & PAY SER LTD",
+        "qty": "1600",
+        "remarks": null,
+        "symbol": "SBICARD",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "STATE BANK OF INDIA",
+        "qty": "17408",
+        "remarks": null,
+        "symbol": "SBIN",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SHIPPING CORP OF INDIA LT",
+        "qty": "1",
+        "remarks": null,
+        "symbol": "SCI",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SEDEMAC MECHATRONICS LTD",
+        "qty": "13",
+        "remarks": null,
+        "symbol": "SEDEMAC",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SHADOWFAX TECHNOLOGIES L",
+        "qty": "4",
+        "remarks": null,
+        "symbol": "SHADOWFAX",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SHAKTI PUMPS (I) LTD",
+        "qty": "10",
+        "remarks": null,
+        "symbol": "SHAKTIPUMP",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SHREE CEMENTS LTD",
+        "qty": "50",
+        "remarks": null,
+        "symbol": "SHREECEM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SHRIRAM FINANCE LIMITED",
+        "qty": "4975",
+        "remarks": null,
+        "symbol": "SHRIRAMFIN",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SIEMENS LTD",
+        "qty": "525",
+        "remarks": null,
+        "symbol": "SIEMENS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SOLAR INDUSTRIES (I) LTD",
+        "qty": "32",
+        "remarks": null,
+        "symbol": "SOLARINDS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SONA BLW PRECISION FRGS L",
+        "qty": "3560",
+        "remarks": null,
+        "symbol": "SONACOMS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SRF LTD",
+        "qty": "400",
+        "remarks": null,
+        "symbol": "SRF",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SUN PHARMACEUTICALS IND.",
+        "qty": "21000",
+        "remarks": null,
+        "symbol": "SUNPHARMA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SUPREME INDUSTRIES LTD",
+        "qty": "175",
+        "remarks": null,
+        "symbol": "SUPREMEIND",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SUZLON ENERGY LIMITED",
+        "qty": "124200",
+        "remarks": null,
+        "symbol": "SUZLON",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SWAN CORP LIMITED",
+        "qty": "2",
+        "remarks": null,
+        "symbol": "SWANCORP",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SWIGGY LIMITED",
+        "qty": "7300",
+        "remarks": null,
+        "symbol": "SWIGGY",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "STERLING & WILSON SO LTD",
+        "qty": "4",
+        "remarks": null,
+        "symbol": "SWSOLAR",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "SYRMA SGS TECHNOLOGY LTD",
+        "qty": "2913",
+        "remarks": null,
+        "symbol": "SYRMA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "TATA CONSUMER PRODUCT",
+        "qty": "3300",
+        "remarks": null,
+        "symbol": "TATACONSUM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "TATA POWER CO LTD",
+        "qty": "17910",
+        "remarks": null,
+        "symbol": "TATAPOWER",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "TATA STEEL LIMITED",
+        "qty": "41100",
+        "remarks": null,
+        "symbol": "TATASTEEL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "TATA CONSULTANCY SERV LT",
+        "qty": "6399",
+        "remarks": null,
+        "symbol": "TCS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "TECH MAHINDRA LIMITED",
+        "qty": "3601",
+        "remarks": null,
+        "symbol": "TECHM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "THYROCARE TECH LTD",
+        "qty": "5",
+        "remarks": null,
+        "symbol": "THYROCARE",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "TUBE INVEST OF INDIA LTD",
+        "qty": "185",
+        "remarks": null,
+        "symbol": "TIINDIA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "TITAN INDUSTRIES LTD",
+        "qty": "825",
+        "remarks": null,
+        "symbol": "TITAN",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "TATA MOTORS PASS VEH LTD",
+        "qty": "46064",
+        "remarks": null,
+        "symbol": "TMPV",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "TORRENT PHARMACEUTICALS L",
+        "qty": "130",
+        "remarks": null,
+        "symbol": "TORNTPHARM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "TRENT LIMITED",
+        "qty": "901",
+        "remarks": null,
+        "symbol": "TRENT",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "TVS MOTOR COMPANY  LTD",
+        "qty": "1400",
+        "remarks": null,
+        "symbol": "TVSMOTOR",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "UJJIVAN SMALL FINANC BANK",
+        "qty": "8000",
+        "remarks": null,
+        "symbol": "UJJIVANSFB",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ULTRATECH CEMENT LIMITED",
+        "qty": "50",
+        "remarks": null,
+        "symbol": "ULTRACEMCO",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "UNIMECH AEROSPACE N MFG L",
+        "qty": "22",
+        "remarks": null,
+        "symbol": "UNIMECH",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "UNION BANK OF INDIA",
+        "qty": "53200",
+        "remarks": null,
+        "symbol": "UNIONBANK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "UNITED SPIRITS LIMITED",
+        "qty": "400",
+        "remarks": null,
+        "symbol": "UNITDSPR",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "UNO MINDA LIMITED",
+        "qty": "580",
+        "remarks": null,
+        "symbol": "UNOMINDA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "UPL LIMITED",
+        "qty": "1355",
+        "remarks": null,
+        "symbol": "UPL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "URBAN COMPANY LIMITED",
+        "qty": "500",
+        "remarks": null,
+        "symbol": "URBANCO",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "V2 RETAIL LIMITED",
+        "qty": "4",
+        "remarks": null,
+        "symbol": "V2RETAIL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "VARUN BEVERAGES LIMITED    ",
+        "qty": "178",
+        "remarks": null,
+        "symbol": "VBL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "VEDANTA LIMITED",
+        "qty": "4757",
+        "remarks": null,
+        "symbol": "VEDL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "VISHAL MEGA MART LIMITED",
+        "qty": "9713",
+        "remarks": null,
+        "symbol": "VMM",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "VOLTAS LTD",
+        "qty": "5824",
+        "remarks": null,
+        "symbol": "VOLTAS",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "VARDHMAN TEXTILES LIMITED    ",
+        "qty": "30",
+        "remarks": null,
+        "symbol": "VTL",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "WAAREE ENERGIES LIMITED",
+        "qty": "875",
+        "remarks": null,
+        "symbol": "WAAREEENER",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "WELSPUN LIVING LIMITED",
+        "qty": "2",
+        "remarks": null,
+        "symbol": "WELSPUNLIV",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "WIPRO LTD",
+        "qty": "18599",
+        "remarks": null,
+        "symbol": "WIPRO",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "WOCKHARDT LIMITED",
+        "qty": "46",
+        "remarks": null,
+        "symbol": "WOCKPHARMA",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "YES BANK LIMITED",
+        "qty": "715054",
+        "remarks": null,
+        "symbol": "YESBANK",
+        "watp": null
+      },
+      {
+        "buySell": null,
+        "clientName": null,
+        "date": "23-Nov-2026",
+        "name": "ZYDUS LIFESCIENCES",
+        "qty": "20",
+        "remarks": null,
+        "symbol": "ZYDUSLIFE",
+        "watp": null
+      }
+    ],
+    "BLOCK_DEALS_DATA": [
+      {
+        "buySell": "BUY",
+        "clientName": "SOCIETE GENERALE - ODI",
+        "date": "23-Nov-2026",
+        "name": "Lenskart Solutions Ltd",
+        "qty": "6176351",
+        "remarks": null,
+        "symbol": "LENSKART",
+        "watp": "725"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "GOLDMAN SACHS INVESTMENTS MAURITIUS I LIMITED",
+        "date": "23-Nov-2026",
+        "name": "Lenskart Solutions Ltd",
+        "qty": "6176351",
+        "remarks": null,
+        "symbol": "LENSKART",
+        "watp": "725"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "GOLDMAN SACHS BANK EUROPESE-ODI",
+        "date": "23-Nov-2026",
+        "name": "Lenskart Solutions Ltd",
+        "qty": "345000",
+        "remarks": null,
+        "symbol": "LENSKART",
+        "watp": "725"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "STEADVIEW CAPITAL MAURITIUS LIMITED-FDI",
+        "date": "23-Nov-2026",
+        "name": "Lenskart Solutions Ltd",
+        "qty": "11520222",
+        "remarks": null,
+        "symbol": "LENSKART",
+        "watp": "725"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "LTR FOCUS FUND-FDI",
+        "date": "23-Nov-2026",
+        "name": "Lenskart Solutions Ltd",
+        "qty": "1177480",
+        "remarks": null,
+        "symbol": "LENSKART",
+        "watp": "725"
+      }
+    ]
+  }
+}

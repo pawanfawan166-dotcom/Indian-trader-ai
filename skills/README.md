@@ -59,6 +59,15 @@ and U.S. analyst requests require a User-Agent with your name and email:
 official NSE filings; optional Angel One quotes require local SmartAPI
 environment variables documented in `trader-analyst/SKILL.md`.
 
+## Indian NSE dashboard
+
+The Streamlit dashboard (`streamlit run app.py`) uses NSE public equity quotes
+by default and falls back to Yahoo Finance when NSE is unavailable. The
+Auto-Pilot checks quotes only for its top ten liquid candidates. Broker
+credentials are not required: the collapsed sidebar settings are optional,
+remain in the active Streamlit session, and are not used by the paper-only
+pipeline.
+
 ## The eleven
 
 | command | job | what it does |

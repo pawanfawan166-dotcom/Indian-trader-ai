@@ -158,15 +158,103 @@ def show_deals(rows):
     )
 
 
+def _scanner_rows_to_frame(rows, company_names, include_status=False):
+    output = []
+    for stock in rows:
+        setups = stock.get("setups") or stock.get("setup") or []
+        if isinstance(setups, str):
+            setups = [setups]
+        setup_status = ", ".join(setups)
+        if include_status and not setup_status:
+            setup_status = "Scanned · no matching setup"
+        symbol = str(stock.get("symbol", ""))
+        average_volume = stock.get(
+            "average_daily_volume", stock.get("avg_daily_volume")
+        )
+        liquid = stock.get("liquid")
+        liquid_label = (
+            "Yes" if liquid is True else
+            "No" if liquid is False else
+            "—"
+        )
+        output.append({
+            "Symbol": symbol,
+            "Company": company_names.get(nse_ticker(symbol), ""),
+            "Price (₹)": stock.get("price"),
+            "RSI": stock.get("rsi"),
+            "Setup / Status": setup_status,
+            "Volume": stock.get("volume"),
+            "Avg Daily Volume": average_volume,
+            "Liquid": liquid_label,
+            "Close Date": stock.get("close_date", ""),
+        })
+    return pd.DataFrame(output)
+
+
+def _all_scanned_rows(doc):
+    rows = doc.get("stocks") or doc.get("hits") or []
+    if not doc.get("stocks"):
+        return rows
+
+    def numeric_value(value):
+        if value is None:
+            return float("nan")
+        return pd.to_numeric(str(value).replace(",", ""), errors="coerce")
+
+    mode = str(doc.get("mode") or "").lower()
+    filters = doc.get("filters") or {}
+    try:
+        minimum_price = float(filters.get("min_price", 0) or 0)
+        minimum_volume = float(filters.get("min_volume", 0) or 0)
+    except (TypeError, ValueError):
+        minimum_price = minimum_volume = 0
+
+    if mode == "daily":
+        return [
+            row for row in rows
+            if row.get("liquid") is True
+            and numeric_value(row.get("data_bars")) >= 30
+            and numeric_value(row.get("price")) >= minimum_price
+            and numeric_value(row.get("volume")) >= minimum_volume
+        ]
+
+    if mode == "orb":
+        try:
+            cutoff = datetime.datetime.strptime(
+                str(doc.get("as_of", "")).removesuffix(" IST"),
+                "%Y-%m-%d %H:%M",
+            )
+            session_open = datetime.datetime.combine(
+                cutoff.date(), datetime.time(9, 15)
+            )
+            session_close = datetime.datetime.combine(
+                cutoff.date(), datetime.time(15, 30)
+            )
+            cutoff = min(cutoff, session_close)
+            expected_bars = int(
+                (cutoff - session_open).total_seconds() // (5 * 60)
+            )
+        except ValueError:
+            expected_bars = None
+        if expected_bars is not None:
+            return [
+                row for row in rows
+                if row.get("liquid") is True
+                and numeric_value(row.get("data_bars")) == expected_bars
+                and numeric_value(row.get("price")) >= minimum_price
+                and numeric_value(row.get("volume")) >= minimum_volume
+            ]
+    return rows
+
+
 def load_watchlist():
     if not WATCHLIST.exists():
-        return {}, pd.DataFrame()
+        return {}, pd.DataFrame(), pd.DataFrame()
     try:
         doc = json.loads(WATCHLIST.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as exc:
-        return {"error": str(exc)}, pd.DataFrame()
+        return {"error": str(exc)}, pd.DataFrame(), pd.DataFrame()
 
-    hits = doc.get("stocks") or doc.get("hits", [])
     company_names = {}
     try:
         for line in (ROOT / "trader" / "universe.txt").read_text(encoding="utf-8").splitlines():
@@ -175,24 +263,11 @@ def load_watchlist():
                 company_names[nse_ticker(symbol)] = name.strip()
     except OSError:
         pass
-    rows = []
-    for hit in hits:
-        setups = hit.get("setups") or hit.get("setup") or []
-        if isinstance(setups, str):
-            setups = [setups]
-        rows.append({
-            "Symbol": hit.get("symbol", ""),
-            "Company": company_names.get(nse_ticker(str(hit.get("symbol", ""))), ""),
-            "Price (₹)": hit.get("price"),
-            "RSI": hit.get("rsi"),
-            "Setup": ", ".join(setups),
-            "Volume": hit.get("volume"),
-            "Avg Daily Volume": hit.get("average_daily_volume"),
-            "Liquid": hit.get("liquid"),
-            "Close Date": hit.get("close_date", ""),
-        })
-    frame = pd.DataFrame(rows)
-    return doc, frame
+    hits_frame = _scanner_rows_to_frame(doc.get("hits") or [], company_names)
+    scanned_frame = _scanner_rows_to_frame(
+        _all_scanned_rows(doc), company_names, include_status=True
+    )
+    return doc, hits_frame, scanned_frame
 
 
 def format_watchlist(frame: pd.DataFrame):
@@ -574,21 +649,30 @@ autopilot_tab, scanner_tab, analyzer_tab, analyst_tab, budget_broker_tab, alerts
 with autopilot_tab:
     st.subheader("Strict NSE trade qualification")
     st.caption(
-        "Runs the 11 local trader skills in order. Candidates are eliminated on missing data, "
-        "R:R below 1.5, Monte Carlo win probability below 50% or negative expected value, "
-        "and failed risk checks. Tickets are paper proposals only."
+        "Runs the 11 local trader skills in order. Replay qualification requires at least 40% green paths, "
+        "positive expected value, and an exit plan with R:R of at least 1.5. Tickets are paper proposals only."
     )
+    autopilot_mode = st.selectbox(
+        "Auto-Pilot mode",
+        ["F&O Intraday (5m/15m)", "Cash Swing (Daily)"],
+        index=0,
+        key="autopilot_mode",
+    )
+    mode_key = "fo_intraday" if autopilot_mode.startswith("F&O") else "cash_swing"
     if st.button("Run 11-Skill Auto-Pilot", type="primary", key="autopilot_run"):
         progress_box = st.empty()
         progress_log = []
 
         def update_autopilot(step, skill, message):
             progress_log.append(f"{step}/11 · {skill} · {message}")
+            st.session_state["autopilot_trace"] = list(progress_log)
             progress_box.markdown("\n\n".join(f"- {line}" for line in progress_log[-11:]))
 
         with st.spinner("Executing qualification pipeline; no trades are sent to a broker..."):
             try:
-                st.session_state["autopilot_result"] = run_autopilot(ROOT, update_autopilot)
+                st.session_state["autopilot_result"] = run_autopilot(
+                    ROOT, update_autopilot, mode=mode_key,
+                )
             except (OSError, ValueError, RuntimeError) as exc:
                 st.session_state["autopilot_result"] = {
                     "error": str(exc),
@@ -615,6 +699,48 @@ with autopilot_tab:
         if autopilot_result.get("error"):
             st.error(autopilot_result["error"])
         qualified = autopilot_result.get("qualified") or []
+        candidates = autopilot_result.get("candidates") or []
+
+        if qualified:
+            best = qualified[0]
+            best_plan = best["plan"]
+            with st.container(border=True):
+                st.markdown(f"#### Best F&O Intraday Setup · {best['symbol']}")
+                st.caption("Highest-ranked rules-qualified paper proposal. This is not a recommendation.")
+                summary_cols = st.columns(5)
+                summary_cols[0].metric("Direction", str(best.get("_funnel", {}).get("Direction", "LONG")))
+                summary_cols[1].metric("Entry", f"₹{best_plan['entry']:,.2f}")
+                summary_cols[2].metric("Stop-Loss", f"₹{best_plan['stop']:,.2f}")
+                summary_cols[3].metric("Target", f"₹{best_plan['target']:,.2f}")
+                summary_cols[4].metric("R:R · Quantity", f"{best_plan['reward_risk']:.2f} · {best['sizing']['qty']:,}")
+
+        funnel_columns = [
+            "Symbol", "Direction", "Entry", "SL", "Target", "R:R",
+            "Time Machine Win %", "Expected Value (R)", "Passed/Rejected Reason",
+        ]
+        funnel_frame = pd.DataFrame(candidates).reindex(columns=funnel_columns)
+        st.markdown("#### Top 10 Candidates Funnel Table")
+        st.dataframe(
+            funnel_frame,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Entry": st.column_config.NumberColumn(format="₹%.2f"),
+                "SL": st.column_config.NumberColumn(format="₹%.2f"),
+                "Target": st.column_config.NumberColumn(format="₹%.2f"),
+                "R:R": st.column_config.NumberColumn(format="%.2f"),
+                "Time Machine Win %": st.column_config.NumberColumn(format="%.1f%%"),
+                "Expected Value (R)": st.column_config.NumberColumn(format="%+.3fR"),
+                "Passed/Rejected Reason": st.column_config.TextColumn(width="large"),
+            },
+        )
+
+        trace = st.session_state.get("autopilot_trace") or []
+        if trace:
+            with st.expander("11-Skill Handoff Trace", expanded=True):
+                for line in trace:
+                    st.markdown(f"- {line}")
+
         if not qualified:
             st.warning("No Qualified Trade Found Today (Capital Protected)")
         else:
@@ -764,12 +890,20 @@ with scanner_tab:
             elif stdout:
                 st.info(stdout)
 
-    doc, frame = load_watchlist()
+    doc, hits_frame, scanned_frame = load_watchlist()
     if isinstance(doc, dict) and doc.get("error"):
         st.error(f"Could not read watchlist: {doc['error']}")
-    elif frame.empty:
+    elif scanned_frame.empty:
         st.info("No watchlist data yet. Run a scanner mode above.")
     else:
+        selected_view = st.radio(
+            "Scanner view",
+            ["Hits Only (matched setups)", "All Scanned Stocks"],
+            horizontal=True,
+            key="scanner_table_view",
+        )
+        is_hits_view = selected_view == "Hits Only (matched setups)"
+        frame = hits_frame if is_hits_view else scanned_frame
         search = st.text_input("Search symbols or setup", key="watchlist_search")
         filtered = frame
         if search:
@@ -788,13 +922,13 @@ with scanner_tab:
         meta1.metric("Mode", str(doc.get("mode", "—")).upper())
         meta2.metric("As of", str(doc.get("as_of", "—")))
         with meta3:
-            with st.popover(f"Watchlist: {len(frame)} Stocks"):
+            with st.popover(f"Watchlist: {len(scanned_frame)} Stocks"):
                 popup_filter = st.text_input(
                     "Filter stocks",
                     placeholder="Company or ticker",
                     key="watchlist_popup_filter",
                 )
-                popup_rows = frame
+                popup_rows = scanned_frame
                 if popup_filter:
                     popup_needle = popup_filter.casefold()
                     popup_mask = popup_rows[["Symbol", "Company"]].astype(str).apply(
@@ -827,6 +961,10 @@ with scanner_tab:
                                 st.session_state["selected_scanner_symbol"] = symbol
                                 st.session_state.pop(table_key, None)
 
+        st.caption(
+            f"Showing {len(filtered):,} of {len(frame):,} "
+            f"{'matched setup hits' if is_hits_view else 'scanned stocks'}."
+        )
         table_event = st.dataframe(
             format_watchlist(filtered),
             use_container_width=True,
@@ -851,8 +989,10 @@ with scanner_tab:
 
         chart_ticker = st.session_state.get("selected_scanner_symbol")
         if chart_ticker:
-            selected_rows = frame[
-                frame["Symbol"].map(lambda symbol: nse_ticker(str(symbol))) == chart_ticker
+            selected_rows = scanned_frame[
+                scanned_frame["Symbol"].map(
+                    lambda symbol: nse_ticker(str(symbol))
+                ) == chart_ticker
             ]
             selected = selected_rows.iloc[0] if not selected_rows.empty else {}
             st.markdown(f"#### {chart_ticker} · Live scanner detail")
@@ -887,9 +1027,9 @@ with scanner_tab:
                 q1, q2, q3 = st.columns(3)
                 q1.metric("Latest close", f"₹{float(latest['Close']):,.2f}")
                 q2.metric("20-session avg volume", f"{average_volume:,.0f}")
-                q3.metric("Scanner setup", str(selected.get("Setup") or "—"))
+                q3.metric("Scanner setup", str(selected.get("Setup / Status") or "—"))
                 st.caption(
-                    f"Watchlist setup: {selected.get('Setup') or '—'} · "
+                    f"Watchlist setup: {selected.get('Setup / Status') or '—'} · "
                     f"Scanner RSI: {selected.get('RSI') if pd.notna(selected.get('RSI')) else '—'} · "
                     f"Watchlist volume: {selected.get('Volume') if pd.notna(selected.get('Volume')) else '—'}"
                 )

@@ -2,7 +2,7 @@
 name: trader-news
 description: >-
   News Monitor. Tracks breaking news on every stock you watch and flags what
-  moves it: Yahoo Finance and Google News India headlines per NSE ticker,
+  moves it: Moneycontrol RSS and Google News India results restricted to Moneycontrol,
   NSE/Indian headlines and how
   far each stock is from yesterday's close. Shows only what is new since the
   last check, newest first, in IST, tags each item (earnings,
@@ -36,8 +36,9 @@ python3 "${CLAUDE_SKILL_DIR}/news.py" --no-sec --json
 | `--tickers`, else `trader/watchlist.json` | the scanner's hits (trader-scanner) |
 | `trader/plan.json` | the trade you are planning (trader-exit) |
 | `trader/portfolio.json` | what you hold (trader-broker records fills there) |
-| Yahoo Finance headline RSS | India settings, NSE symbol such as `RELIANCE.NS` |
-| Google News India RSS | Search results for each NSE symbol and Indian-market context |
+| Moneycontrol RSS | Checked first; results are retained only when the exact NSE symbol or company name appears |
+| Google News India RSS | `site:moneycontrol.com` search for the exact NSE symbol/company name; exact-mention filtered |
+| Yahoo Finance headline RSS | Secondary fallback; exact NSE symbol/company-name mention required |
 | Yahoo Finance chart endpoint | the last INR (₹) price against yesterday's close (unofficial, can lag) |
 | NSE company filings | Use the trader-analyst skill for official NSE filing facts; this skill tracks news feeds |
 | `trader/state/news.json` | what has been shown (kept 30 days) and each ticker's CIK |
@@ -78,8 +79,10 @@ morning before the open.
 
 ## Example: the reel
 
-Use `RELIANCE` or `RELIANCE.NS` to get India-region Yahoo headlines, Google
-News India results and an INR price line. Example shape:
+Use `RELIANCE` or `RELIANCE.NS` to get Moneycontrol headlines first, then
+Moneycontrol-filtered Google News India results and a Yahoo RSS fallback.
+Headlines are included only when the title or summary names the exact ticker
+or the company name from `trader/universe.txt`. Example shape:
 `<TICKER>.NS ₹<price> <move>% vs yesterday's close ₹<close> at <time> IST`.
 Do not invent stories or treat an RSS search result as verified reporting.
 

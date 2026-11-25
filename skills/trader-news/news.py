@@ -16,7 +16,7 @@ Your tickers, when --tickers is not given: every hit in trader/watchlist.json
 positions in trader/portfolio.json.
 
 Sources, for each NSE ticker:
-  - Yahoo Finance headline RSS with India settings, plus Google News India.
+  - Moneycontrol RSS, Google News India filtered to Moneycontrol, then Yahoo RSS.
   - Yahoo Finance chart endpoint for the last price against yesterday's close.
   - News and chart lookups are restricted to NSE .NS tickers.
 
@@ -49,6 +49,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 YAHOO = "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%s&region=IN&lang=en-IN"
+MONEYCONTROL_RSS = "https://www.moneycontrol.com/rss/MCtopnews.xml"
 GOOGLE_NEWS = "https://news.google.com/rss/search?q=%s&hl=en-IN&gl=IN&ceid=IN:en"
 CHART = "https://%s.finance.yahoo.com/v8/finance/chart/%s?range=1d&interval=5m"
 SEC_FEED = ("https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=%s&type=%s"
@@ -130,11 +131,22 @@ def watch_from_files(portfolio="trader/portfolio.json", watchlist="trader/watchl
                      plan="trader/plan.json"):
     """{ticker: name or None}: the scanner's hits, the planned trade and your holdings."""
     out = {}
+    universe = os.path.join(os.path.dirname(watchlist) or ".", "universe.txt")
+    names = {}
+    try:
+        with open(universe, encoding="utf-8") as fh:
+            for line in fh:
+                symbol, separator, name = line.partition("|")
+                if separator and symbol.strip():
+                    names[nse_ticker(symbol)] = name.strip()
+    except OSError:
+        pass
     wl = load_json(watchlist) or {}
     for h in wl.get("hits", []):
         sym = h.get("symbol") or h.get("ticker")
         if sym:
-            out[nse_ticker(sym)] = h.get("name")
+            normalized = nse_ticker(sym)
+            out[normalized] = h.get("name") or names.get(normalized)
     pl = load_json(plan) or {}
     if pl.get("symbol"):
         out.setdefault(nse_ticker(pl["symbol"]), pl.get("name"))
@@ -142,7 +154,23 @@ def watch_from_files(portfolio="trader/portfolio.json", watchlist="trader/watchl
     for p in pf.get("positions", []):
         sym = p.get("ticker") or p.get("symbol")
         if sym:
-            out[nse_ticker(sym)] = p.get("name") or out.get(nse_ticker(sym))
+            normalized = nse_ticker(sym)
+            out[normalized] = p.get("name") or out.get(normalized) or names.get(normalized)
+    return out
+
+
+def universe_names(watchlist="trader/watchlist.json"):
+    """Map NSE tickers to official NSE-universe company names, when available."""
+    path = os.path.join(os.path.dirname(watchlist) or ".", "universe.txt")
+    out = {}
+    try:
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                symbol, separator, name = line.partition("|")
+                if separator and symbol.strip():
+                    out[nse_ticker(symbol)] = name.strip()
+    except OSError:
+        pass
     return out
 
 
@@ -198,10 +226,10 @@ def yahoo_symbol(ticker):
 
 
 def nse_ticker(ticker):
-    ticker = str(ticker or "").strip().upper()
-    if ticker.endswith(".NS"):
-        return ticker
-    return ticker + ".NS"
+    ticker = re.sub(r"\s+", "", str(ticker or "")).upper()
+    while ticker.endswith(".NS"):
+        ticker = ticker[:-3]
+    return ticker + ".NS" if ticker else ""
 
 
 def cik_map(fetcher, state):
@@ -262,6 +290,35 @@ def parse_rss(data, ticker, source="Yahoo Finance"):
                     "ticker": ticker, "title": title, "summary": _text(it, "description"),
                     "link": link, "time": parse_time(_text(it, "pubDate"))})
     return out
+
+
+def relevant_to_ticker(item, ticker, name=None):
+    """Keep only titles/summaries with an exact NSE symbol or company-name mention."""
+    hay = "%s %s" % (item.get("title") or "", item.get("summary") or "")
+    base = nse_ticker(ticker)[:-3]
+    if len(base) <= 2:
+        ticker_match = re.search(
+            r"(?:\bNSE\s*:\s*%s(?![A-Z0-9])|[\(\[]\s*%s\s*[\)\]])"
+            % (re.escape(base), re.escape(base)),
+            hay,
+            re.I,
+        )
+    else:
+        ticker_match = re.search(
+            r"(?<![A-Z0-9])%s(?![A-Z0-9])" % re.escape(base), hay, re.I)
+    if ticker_match:
+        return True
+    if name:
+        clean_name = re.sub(r"\s+(?:limited|ltd\.?|inc\.?)$", "", name.strip(), flags=re.I)
+        if clean_name and re.search(
+            r"(?<![A-Z0-9])%s(?![A-Z0-9])" % re.escape(clean_name), hay, re.I
+        ):
+            return True
+    return False
+
+
+def _for_ticker(items, ticker, name):
+    return [item for item in items if relevant_to_ticker(item, ticker, name)]
 
 
 def parse_sec_atom(data, ticker):
@@ -337,9 +394,16 @@ def mention_patterns(watch):
     pats = {}
     for t, name in watch.items():
         base = t[:-3] if t.endswith(".NS") else t
-        alts = [r"\(%s\)" % re.escape(t), r"\b%s\b" % re.escape(base)]
+        if len(base) <= 2:
+            alts = [
+                r"\bNSE\s*:\s*%s(?![A-Z0-9])" % re.escape(base),
+                r"[\(\[]\s*%s\s*[\)\]]" % re.escape(base),
+            ]
+        else:
+            alts = [r"\b%s\b" % re.escape(base)]
         if t.endswith(".NS"):
-            alts.append(r"\bNSE\s*:\s*%s\b" % re.escape(base))
+            if len(base) > 2:
+                alts.append(r"\bNSE\s*:\s*%s\b" % re.escape(base))
         if name and len(name) >= 4:
             alts.append(r"\b%s\b" % re.escape(name).replace(r"\ ", r"[\s-]"))
         pats[t] = re.compile("|".join(alts))
@@ -393,18 +457,33 @@ def collect(fetcher, watch, state, sec=True, forms=("8-K",), count=10, errors=No
     errors = [] if errors is None else errors
     items = []
     for t in sorted(watch):
+        name = watch.get(t)
+        query_parts = ['site:moneycontrol.com']
+        if name:
+            query_parts.append('"%s"' % name)
+        query_parts.append('"%s"' % t[:-3])
+        query = urllib.parse.quote(" ".join(query_parts))
+        try:
+            mc = parse_rss(
+                fetcher.get(MONEYCONTROL_RSS, "moneycontrol-%s.xml" % t),
+                t,
+                "Moneycontrol",
+            )
+            items += _for_ticker(mc, t, name)
+        except NewsError as exc:
+            errors.append("Moneycontrol for %s: %s" % (t, exc))
+        try:
+            url = GOOGLE_NEWS % query
+            google = parse_rss(fetcher.get(url, "google-%s.xml" % t), t, "Google News India · Moneycontrol")
+            items += _for_ticker(google, t, name)
+        except NewsError as exc:
+            errors.append("Google News India for %s: %s" % (t, exc))
         try:
             url = YAHOO % urllib.parse.quote(yahoo_symbol(t), safe=".")
-            items += parse_rss(fetcher.get(url, "yahoo-%s.xml" % t), t)
+            yahoo = parse_rss(fetcher.get(url, "yahoo-%s.xml" % t), t)
+            items += _for_ticker(yahoo, t, name)
         except NewsError as exc:
             errors.append("headlines for %s: %s" % (t, exc))
-        if t.endswith(".NS"):
-            query = urllib.parse.quote("%s NSE stock" % yahoo_symbol(t))
-            url = GOOGLE_NEWS % query
-            try:
-                items += parse_rss(fetcher.get(url, "google-%s.xml" % t), t, "Google News India")
-            except NewsError as exc:
-                errors.append("Google News India for %s: %s" % (t, exc))
     us_tickers = []
     if sec and us_tickers:
         try:
@@ -523,6 +602,8 @@ def main(argv=None):
         watch = {nse_ticker(t): None for t in args.tickers}
         known = watch_from_files(args.portfolio, args.watchlist, args.plan)
         watch.update({t: known[t] for t in watch if known.get(t)})
+        names = universe_names(args.watchlist)
+        watch.update({t: watch[t] or names.get(t) for t in watch})
     else:
         watch = watch_from_files(args.portfolio, args.watchlist, args.plan)
     if not watch:
