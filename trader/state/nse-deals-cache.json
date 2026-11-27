@@ -1,902 +1,1042 @@
 {
-  "saved_at": "2026-11-25T15:01:47+05:30",
+  "saved_at": "2026-11-25T22:20:34+05:30",
   "snapshot": {
-    "as_on_date": "23-Nov-2026",
+    "as_on_date": "25-Nov-2026",
     "BULK_DEALS_DATA": [
       {
         "buySell": "BUY",
-        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ajmera Realty & Inf I Ltd",
-        "qty": "1015117",
+        "clientName": "THAKKAR NILESHKUMAR FARSHURAM HUF",
+        "date": "25-Nov-2026",
+        "name": "Agi Infra Limited",
+        "qty": "1600000",
         "remarks": "-",
-        "symbol": "AJMERA",
-        "watp": "163.94"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ajmera Realty & Inf I Ltd",
-        "qty": "1611103",
-        "remarks": "-",
-        "symbol": "AJMERA",
-        "watp": "163.27"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "GRAVITON RESEARCH CAPITAL LLP",
-        "date": "23-Nov-2026",
-        "name": "Apl Apollo Tubes Ltd",
-        "qty": "1993475",
-        "remarks": "-",
-        "symbol": "APLAPOLLO",
-        "watp": "1765.13"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "HRTI PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "BLS Polymers Limited",
-        "qty": "450989",
-        "remarks": "-",
-        "symbol": "BLSPOLY",
-        "watp": "265.54"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "QE SECURITIES LLP",
-        "date": "23-Nov-2026",
-        "name": "BLS Polymers Limited",
-        "qty": "514230",
-        "remarks": "-",
-        "symbol": "BLSPOLY",
-        "watp": "265.09"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "PLUTUS WEALTH MANAGEMENT LLP",
-        "date": "23-Nov-2026",
-        "name": "BLS Polymers Limited",
-        "qty": "401319",
-        "remarks": "-",
-        "symbol": "BLSPOLY",
-        "watp": "264.98"
+        "symbol": "AGIIL",
+        "watp": "303.32"
       },
       {
         "buySell": "BUY",
         "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Commercial Syn Bags Ltd",
-        "qty": "296067",
+        "date": "25-Nov-2026",
+        "name": "Agi Infra Limited",
+        "qty": "1049964",
         "remarks": "-",
-        "symbol": "COMSYN",
-        "watp": "276.93"
+        "symbol": "AGIIL",
+        "watp": "305.03"
       },
       {
         "buySell": "BUY",
-        "clientName": "L7 HITECH PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Eventions Limited",
-        "qty": "4800",
+        "clientName": "GRAVITON RESEARCH CAPITAL LLP",
+        "date": "25-Nov-2026",
+        "name": "Apl Apollo Tubes Ltd",
+        "qty": "3476928",
         "remarks": "-",
-        "symbol": "EVENTIONS",
-        "watp": "52.68"
+        "symbol": "APLAPOLLO",
+        "watp": "1469.25"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "BASAN EQUITY BROKING LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Apsis Aerocom Limited",
+        "qty": "1400",
+        "remarks": "-",
+        "symbol": "APSISAERO",
+        "watp": "506.66"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Arisinfra Solutions Ltd",
+        "qty": "455390",
+        "remarks": "-",
+        "symbol": "ARIS",
+        "watp": "188.64"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "HRTI PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Arisinfra Solutions Ltd",
+        "qty": "510718",
+        "remarks": "-",
+        "symbol": "ARIS",
+        "watp": "183.7"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Arisinfra Solutions Ltd",
+        "qty": "620095",
+        "remarks": "-",
+        "symbol": "ARIS",
+        "watp": "186.52"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "QE SECURITIES LLP",
+        "date": "25-Nov-2026",
+        "name": "Arisinfra Solutions Ltd",
+        "qty": "789656",
+        "remarks": "-",
+        "symbol": "ARIS",
+        "watp": "183.43"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Arisinfra Solutions Ltd",
+        "qty": "477628",
+        "remarks": "-",
+        "symbol": "ARIS",
+        "watp": "186.13"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "HRTI PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "BLS Polymers Limited",
+        "qty": "302309",
+        "remarks": "-",
+        "symbol": "BLSPOLY",
+        "watp": "262.21"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "MANSI SHARE AND STOCK BROKING PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Bench Mark Infotech Ser L",
+        "qty": "96000",
+        "remarks": "-",
+        "symbol": "BMISL",
+        "watp": "161.24"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "HRTI PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Greaves Limited",
+        "qty": "2151749",
+        "remarks": "-",
+        "symbol": "GREAVESCOT",
+        "watp": "304.95"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "QE SECURITIES LLP",
+        "date": "25-Nov-2026",
+        "name": "Greaves Limited",
+        "qty": "1780246",
+        "remarks": "-",
+        "symbol": "GREAVESCOT",
+        "watp": "303.78"
       },
       {
         "buySell": "BUY",
         "clientName": "GENZ INVESTMENT ADVISORS PRIVATE LIMITED",
-        "date": "23-Nov-2026",
+        "date": "25-Nov-2026",
         "name": "Green Asia Impex Limited",
-        "qty": "155200",
+        "qty": "300800",
         "remarks": "-",
         "symbol": "GREENASIA",
-        "watp": "74.39"
+        "watp": "74.63"
       },
       {
         "buySell": "BUY",
-        "clientName": "QE SECURITIES LLP",
-        "date": "23-Nov-2026",
-        "name": "Hi-Tech Pipes Limited",
-        "qty": "1008057",
+        "clientName": "MULTIPLIER SHARE & STOCK ADVISORS PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "GSM Foils Limited",
+        "qty": "100000",
         "remarks": "-",
-        "symbol": "HITECH",
-        "watp": "85.48"
+        "symbol": "GSMFOILS",
+        "watp": "38.7"
       },
       {
         "buySell": "BUY",
-        "clientName": "QE SECURITIES LLP",
-        "date": "23-Nov-2026",
-        "name": "HMA Agro Industries Ltd",
-        "qty": "3968561",
+        "clientName": "HI GROWTH CORPORATE SERVICES PVT LTD",
+        "date": "25-Nov-2026",
+        "name": "GSM Foils Limited",
+        "qty": "51000",
         "remarks": "-",
-        "symbol": "HMAAGRO",
-        "watp": "37.23"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "CLT RESEARCH TECH PRIVATE LTD",
-        "date": "23-Nov-2026",
-        "name": "HMA Agro Industries Ltd",
-        "qty": "4189698",
-        "remarks": "-",
-        "symbol": "HMAAGRO",
-        "watp": "38.28"
+        "symbol": "GSMFOILS",
+        "watp": "38.97"
       },
       {
         "buySell": "BUY",
         "clientName": "HRTI PRIVATE LIMITED",
-        "date": "23-Nov-2026",
+        "date": "25-Nov-2026",
         "name": "HMA Agro Industries Ltd",
-        "qty": "3951846",
+        "qty": "2466169",
         "remarks": "-",
         "symbol": "HMAAGRO",
-        "watp": "37.84"
+        "watp": "42.1"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Ackruti City Limited",
+        "qty": "1213872",
+        "remarks": "-",
+        "symbol": "HUBTOWN",
+        "watp": "193.22"
       },
       {
         "buySell": "BUY",
         "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "HMA Agro Industries Ltd",
-        "qty": "4099601",
+        "date": "25-Nov-2026",
+        "name": "Ackruti City Limited",
+        "qty": "1017426",
         "remarks": "-",
-        "symbol": "HMAAGRO",
-        "watp": "37.85"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "HMA Agro Industries Ltd",
-        "qty": "5209491",
-        "remarks": "-",
-        "symbol": "HMAAGRO",
-        "watp": "37.96"
+        "symbol": "HUBTOWN",
+        "watp": "194.97"
       },
       {
         "buySell": "BUY",
         "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "HMA Agro Industries Ltd",
-        "qty": "6196618",
+        "date": "25-Nov-2026",
+        "name": "Ackruti City Limited",
+        "qty": "1146642",
         "remarks": "-",
-        "symbol": "HMAAGRO",
-        "watp": "37.58"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "India Glycols Ltd",
-        "qty": "611940",
-        "remarks": "-",
-        "symbol": "INDIAGLYCO",
-        "watp": "295.04"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "IRAGE BROKING SERVICES LLP",
-        "date": "23-Nov-2026",
-        "name": "India Glycols Ltd",
-        "qty": "514548",
-        "remarks": "-",
-        "symbol": "INDIAGLYCO",
-        "watp": "295.73"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "India Glycols Ltd",
-        "qty": "679982",
-        "remarks": "-",
-        "symbol": "INDIAGLYCO",
-        "watp": "295.01"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "India Glycols Ltd",
-        "qty": "846596",
-        "remarks": "-",
-        "symbol": "INDIAGLYCO",
-        "watp": "294.89"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "NK SECURITIES RESEARCH PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "India Glycols Ltd",
-        "qty": "460057",
-        "remarks": "-",
-        "symbol": "INDIAGLYCO",
-        "watp": "295.6"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "INDUS WORLD TRADE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Italian Edibles Limited",
-        "qty": "150000",
-        "remarks": "-",
-        "symbol": "ITALIANE",
-        "watp": "24.45"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Jeena Sikho Lifecare Ltd",
-        "qty": "979426",
-        "remarks": "-",
-        "symbol": "JSLL",
-        "watp": "329.23"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Jeena Sikho Lifecare Ltd",
-        "qty": "1160939",
-        "remarks": "-",
-        "symbol": "JSLL",
-        "watp": "328.7"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Jeena Sikho Lifecare Ltd",
-        "qty": "741165",
-        "remarks": "-",
-        "symbol": "JSLL",
-        "watp": "328.52"
+        "symbol": "HUBTOWN",
+        "watp": "195.24"
       },
       {
         "buySell": "BUY",
         "clientName": "QE SECURITIES LLP",
-        "date": "23-Nov-2026",
-        "name": "Jeena Sikho Lifecare Ltd",
-        "qty": "875156",
+        "date": "25-Nov-2026",
+        "name": "Ackruti City Limited",
+        "qty": "801838",
         "remarks": "-",
-        "symbol": "JSLL",
-        "watp": "327.73"
+        "symbol": "HUBTOWN",
+        "watp": "194.08"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Ackruti City Limited",
+        "qty": "877980",
+        "remarks": "-",
+        "symbol": "HUBTOWN",
+        "watp": "195.57"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "HARSHA RAJESH JHAVERI",
+        "date": "25-Nov-2026",
+        "name": "Italian Edibles Limited",
+        "qty": "658000",
+        "remarks": "-",
+        "symbol": "ITALIANE",
+        "watp": "23.25"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "QE SECURITIES LLP",
+        "date": "25-Nov-2026",
+        "name": "Jupiter Wagons Limited",
+        "qty": "2117125",
+        "remarks": "-",
+        "symbol": "JWL",
+        "watp": "209.91"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "PGIM INDIA EQUITY GROWTH OPPORTUNITIES FUND SERIES II",
+        "date": "25-Nov-2026",
+        "name": "Sai Silks (Kalamandir) L",
+        "qty": "1000000",
+        "remarks": "-",
+        "symbol": "KALAMANDIR",
+        "watp": "100.39"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Kopran Ltd.",
+        "qty": "290964",
+        "remarks": "-",
+        "symbol": "KOPRAN",
+        "watp": "291.58"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Kopran Ltd.",
+        "qty": "627275",
+        "remarks": "-",
+        "symbol": "KOPRAN",
+        "watp": "290.96"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "J4S FINANCIAL SOLUTIONS LLP",
+        "date": "25-Nov-2026",
+        "name": "Kopran Ltd.",
+        "qty": "360956",
+        "remarks": "-",
+        "symbol": "KOPRAN",
+        "watp": "290.69"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Kopran Ltd.",
+        "qty": "550824",
+        "remarks": "-",
+        "symbol": "KOPRAN",
+        "watp": "290.27"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "QE SECURITIES LLP",
+        "date": "25-Nov-2026",
+        "name": "Kopran Ltd.",
+        "qty": "513989",
+        "remarks": "-",
+        "symbol": "KOPRAN",
+        "watp": "289.94"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "J4S FINANCIAL SOLUTIONS LLP",
+        "date": "25-Nov-2026",
+        "name": "Kopran Ltd.",
+        "qty": "264473",
+        "remarks": "-",
+        "symbol": "KOPRAN",
+        "watp": "290.21"
       },
       {
         "buySell": "BUY",
         "clientName": "BHAVISHYA ECOMMERCE PRIVATE LIMITED",
-        "date": "23-Nov-2026",
+        "date": "25-Nov-2026",
         "name": "Kshitij Polyline Limited",
-        "qty": "200000",
+        "qty": "510124",
         "remarks": "-",
         "symbol": "KSHITIJPOL",
-        "watp": "3.69"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "SATISH MEJIYATAR",
-        "date": "23-Nov-2026",
-        "name": "Kshitij Polyline Limited",
-        "qty": "1304559",
-        "remarks": "-",
-        "symbol": "KSHITIJPOL",
-        "watp": "3.68"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "KADAMBINI SECURITIES PVT LTD",
-        "date": "23-Nov-2026",
-        "name": "Mallcom (India) Limited",
-        "qty": "50000",
-        "remarks": "-",
-        "symbol": "MALLCOM",
-        "watp": "815"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "SAHIL GANDHI",
-        "date": "23-Nov-2026",
-        "name": "Newjaisa Technologies Ltd",
-        "qty": "198000",
-        "remarks": "-",
-        "symbol": "NEWJAISA",
-        "watp": "15.16"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "ARTHKUMBH VENTURES LLP",
-        "date": "23-Nov-2026",
-        "name": "Ratnaveer Precision Eng L",
-        "qty": "500000",
-        "remarks": "-",
-        "symbol": "RATNAVEER",
-        "watp": "390.99"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ratnaveer Precision Eng L",
-        "qty": "1290929",
-        "remarks": "-",
-        "symbol": "RATNAVEER",
-        "watp": "391.72"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "SPECTRA REALTIES PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ruchi Infrastructure Ltd.",
-        "qty": "2600000",
-        "remarks": "-",
-        "symbol": "RUCHINFRA",
-        "watp": "5"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Sunshine Pictures Limited",
-        "qty": "205005",
-        "remarks": "-",
-        "symbol": "SUNSHINE",
-        "watp": "510.03"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "PLUTUS WEALTH MANAGEMENT LLP",
-        "date": "23-Nov-2026",
-        "name": "Ugro Capital Limited",
-        "qty": "1028693",
-        "remarks": "-",
-        "symbol": "UGROCAP",
-        "watp": "82.16"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "HRTI PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ugro Capital Limited",
-        "qty": "1509626",
-        "remarks": "-",
-        "symbol": "UGROCAP",
-        "watp": "82.44"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "CLT RESEARCH TECH PRIVATE LTD",
-        "date": "23-Nov-2026",
-        "name": "Ugro Capital Limited",
-        "qty": "879542",
-        "remarks": "-",
-        "symbol": "UGROCAP",
-        "watp": "82.55"
+        "watp": "3.85"
       },
       {
         "buySell": "BUY",
         "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ugro Capital Limited",
-        "qty": "1494343",
+        "date": "25-Nov-2026",
+        "name": "Magellanic Cloud Limited",
+        "qty": "3567880",
         "remarks": "-",
-        "symbol": "UGROCAP",
-        "watp": "82.65"
+        "symbol": "MCLOUD",
+        "watp": "24.86"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "HDFC MUTUAL FUND",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "2863074",
+        "remarks": "-",
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "SRNDM TRADE VALUE PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "North East Carry Corp Ltd",
+        "qty": "1000000",
+        "remarks": "-",
+        "symbol": "NECCLTD",
+        "watp": "25.8"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "RATHOD MANOJ CHHAGANLAL HUF",
+        "date": "25-Nov-2026",
+        "name": "North East Carry Corp Ltd",
+        "qty": "939733",
+        "remarks": "-",
+        "symbol": "NECCLTD",
+        "watp": "25.78"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "YMS CONSULTANTS LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Onelife Cap Advisors Ltd",
+        "qty": "199793",
+        "remarks": "-",
+        "symbol": "ONELIFECAP",
+        "watp": "62"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ABHISHEK ASHVINBHAI KAMDAR HUF",
+        "date": "25-Nov-2026",
+        "name": "Onix Solar Energy Ltd.",
+        "qty": "252026",
+        "remarks": "-",
+        "symbol": "ONIXSOLAR",
+        "watp": "256.46"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Ratnaveer Precision Eng L",
+        "qty": "230048",
+        "remarks": "-",
+        "symbol": "RATNAVEER",
+        "watp": "399.35"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "TEJAS P PANDYA",
+        "date": "25-Nov-2026",
+        "name": "Shalimar Paints Ltd",
+        "qty": "425000",
+        "remarks": "-",
+        "symbol": "SHALPAINTS",
+        "watp": "109.23"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "RIYABEN MANUBHAI SOLANKI",
+        "date": "25-Nov-2026",
+        "name": "Shalimar Paints Ltd",
+        "qty": "429388",
+        "remarks": "-",
+        "symbol": "SHALPAINTS",
+        "watp": "109.22"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "KADIR FARUKQBHAI VOHRA",
+        "date": "25-Nov-2026",
+        "name": "Shalimar Paints Ltd",
+        "qty": "427000",
+        "remarks": "-",
+        "symbol": "SHALPAINTS",
+        "watp": "109.22"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "25-Nov-2026",
+        "name": "SMC Global Securities Ltd",
+        "qty": "1436303",
+        "remarks": "-",
+        "symbol": "SMCGLOBAL",
+        "watp": "80.98"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Sunshine Pictures Limited",
+        "qty": "284709",
+        "remarks": "-",
+        "symbol": "SUNSHINE",
+        "watp": "513.93"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Thomas Cook  (India)  Ltd",
+        "qty": "4612431",
+        "remarks": "-",
+        "symbol": "THOMASCOOK",
+        "watp": "143.83"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "FAIRBRIDGE CAPITAL (MAURITIUS) LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Thomas Cook  (India)  Ltd",
+        "qty": "5300000",
+        "remarks": "-",
+        "symbol": "THOMASCOOK",
+        "watp": "141.17"
       },
       {
         "buySell": "BUY",
         "clientName": "QE SECURITIES LLP",
-        "date": "23-Nov-2026",
-        "name": "Ugro Capital Limited",
-        "qty": "1608545",
+        "date": "25-Nov-2026",
+        "name": "Thomas Cook  (India)  Ltd",
+        "qty": "5596284",
         "remarks": "-",
-        "symbol": "UGROCAP",
-        "watp": "82.25"
+        "symbol": "THOMASCOOK",
+        "watp": "144.41"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Thomas Cook  (India)  Ltd",
+        "qty": "2649817",
+        "remarks": "-",
+        "symbol": "THOMASCOOK",
+        "watp": "144.37"
       },
       {
         "buySell": "BUY",
         "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ugro Capital Limited",
-        "qty": "1055807",
+        "date": "25-Nov-2026",
+        "name": "Thomas Cook  (India)  Ltd",
+        "qty": "4304074",
         "remarks": "-",
-        "symbol": "UGROCAP",
-        "watp": "82.66"
+        "symbol": "THOMASCOOK",
+        "watp": "144.79"
       },
       {
         "buySell": "BUY",
-        "clientName": "K L B SECURITIES PVT LTD",
-        "date": "23-Nov-2026",
-        "name": "Vineet Laboratories Ltd",
-        "qty": "43",
+        "clientName": "CLT RESEARCH TECH PRIVATE LTD",
+        "date": "25-Nov-2026",
+        "name": "Thomas Cook  (India)  Ltd",
+        "qty": "2746391",
         "remarks": "-",
-        "symbol": "VINEETLAB",
-        "watp": "38.79"
+        "symbol": "THOMASCOOK",
+        "watp": "145.26"
       },
       {
         "buySell": "BUY",
-        "clientName": "NEHA BAGLA",
-        "date": "23-Nov-2026",
-        "name": "Voler Car Limited",
-        "qty": "65600",
+        "clientName": "NK SECURITIES RESEARCH PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Thomas Cook  (India)  Ltd",
+        "qty": "2731056",
         "remarks": "-",
-        "symbol": "VOLERCAR",
-        "watp": "279.45"
-      },
-      {
-        "buySell": "BUY",
-        "clientName": "ORION STOCKS LTD",
-        "date": "23-Nov-2026",
-        "name": "WE WIN LIMITED",
-        "qty": "10479",
-        "remarks": "-",
-        "symbol": "WEWIN",
-        "watp": "44.47"
+        "symbol": "THOMASCOOK",
+        "watp": "145.98"
       },
       {
         "buySell": "SELL",
-        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ajmera Realty & Inf I Ltd",
-        "qty": "1611103",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Agi Infra Limited",
+        "qty": "985326",
         "remarks": "-",
-        "symbol": "AJMERA",
-        "watp": "163.39"
+        "symbol": "AGIIL",
+        "watp": "304.8"
       },
       {
         "buySell": "SELL",
-        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ajmera Realty & Inf I Ltd",
-        "qty": "1015117",
+        "clientName": "KALAPI VINIT NAGADA",
+        "date": "25-Nov-2026",
+        "name": "AKG Exim Limited",
+        "qty": "858320",
         "remarks": "-",
-        "symbol": "AJMERA",
-        "watp": "164.12"
+        "symbol": "AKG",
+        "watp": "8.24"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "SMALLCAP WORLD FUND INC",
+        "date": "25-Nov-2026",
+        "name": "Apl Apollo Tubes Ltd",
+        "qty": "3071937",
+        "remarks": "-",
+        "symbol": "APLAPOLLO",
+        "watp": "1411.37"
       },
       {
         "buySell": "SELL",
         "clientName": "GRAVITON RESEARCH CAPITAL LLP",
-        "date": "23-Nov-2026",
+        "date": "25-Nov-2026",
         "name": "Apl Apollo Tubes Ltd",
-        "qty": "2014740",
+        "qty": "3475270",
         "remarks": "-",
         "symbol": "APLAPOLLO",
-        "watp": "1763.63"
+        "watp": "1470.09"
       },
       {
         "buySell": "SELL",
-        "clientName": "HRTI PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "BLS Polymers Limited",
-        "qty": "483085",
+        "clientName": "BASAN EQUITY BROKING LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Apsis Aerocom Limited",
+        "qty": "69000",
         "remarks": "-",
-        "symbol": "BLSPOLY",
-        "watp": "265.97"
+        "symbol": "APSISAERO",
+        "watp": "477.53"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Arisinfra Solutions Ltd",
+        "qty": "620095",
+        "remarks": "-",
+        "symbol": "ARIS",
+        "watp": "186.85"
       },
       {
         "buySell": "SELL",
         "clientName": "QE SECURITIES LLP",
-        "date": "23-Nov-2026",
-        "name": "BLS Polymers Limited",
-        "qty": "495497",
+        "date": "25-Nov-2026",
+        "name": "Arisinfra Solutions Ltd",
+        "qty": "808010",
         "remarks": "-",
-        "symbol": "BLSPOLY",
-        "watp": "265.35"
+        "symbol": "ARIS",
+        "watp": "182.96"
       },
       {
         "buySell": "SELL",
-        "clientName": "PLUTUS WEALTH MANAGEMENT LLP",
-        "date": "23-Nov-2026",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Arisinfra Solutions Ltd",
+        "qty": "455390",
+        "remarks": "-",
+        "symbol": "ARIS",
+        "watp": "188.79"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Arisinfra Solutions Ltd",
+        "qty": "484471",
+        "remarks": "-",
+        "symbol": "ARIS",
+        "watp": "186.28"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "HRTI PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Arisinfra Solutions Ltd",
+        "qty": "519902",
+        "remarks": "-",
+        "symbol": "ARIS",
+        "watp": "183.62"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "HRTI PRIVATE LIMITED",
+        "date": "25-Nov-2026",
         "name": "BLS Polymers Limited",
-        "qty": "401319",
+        "qty": "332722",
         "remarks": "-",
         "symbol": "BLSPOLY",
-        "watp": "265.14"
+        "watp": "262.62"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "QE SECURITIES LLP",
+        "date": "25-Nov-2026",
+        "name": "Greaves Limited",
+        "qty": "1851677",
+        "remarks": "-",
+        "symbol": "GREAVESCOT",
+        "watp": "304.97"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "HRTI PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Greaves Limited",
+        "qty": "2082973",
+        "remarks": "-",
+        "symbol": "GREAVESCOT",
+        "watp": "305.38"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "NOVA GLOBAL OPPORTUNITIES FUND PCC - TOUCHSTONE",
+        "date": "25-Nov-2026",
+        "name": "Green Asia Impex Limited",
+        "qty": "296000",
+        "remarks": "-",
+        "symbol": "GREENASIA",
+        "watp": "74.64"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "MULTIPLIER SHARE & STOCK ADVISORS PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "GSM Foils Limited",
+        "qty": "100000",
+        "remarks": "-",
+        "symbol": "GSMFOILS",
+        "watp": "41.12"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "HI GROWTH CORPORATE SERVICES PVT LTD",
+        "date": "25-Nov-2026",
+        "name": "GSM Foils Limited",
+        "qty": "73000",
+        "remarks": "-",
+        "symbol": "GSMFOILS",
+        "watp": "40.01"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "HRTI PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "HMA Agro Industries Ltd",
+        "qty": "2646069",
+        "remarks": "-",
+        "symbol": "HMAAGRO",
+        "watp": "41.87"
       },
       {
         "buySell": "SELL",
         "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Commercial Syn Bags Ltd",
-        "qty": "417790",
+        "date": "25-Nov-2026",
+        "name": "Ackruti City Limited",
+        "qty": "1233872",
         "remarks": "-",
-        "symbol": "COMSYN",
-        "watp": "279.87"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "RUPARAM HAKARAM CHOUDHARY",
-        "date": "23-Nov-2026",
-        "name": "DHARAN INFRA-EPC LIMITED",
-        "qty": "26400000",
-        "remarks": "-",
-        "symbol": "DHARAN",
-        "watp": "0.12"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "L7 HITECH PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Eventions Limited",
-        "qty": "84000",
-        "remarks": "-",
-        "symbol": "EVENTIONS",
-        "watp": "53.5"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "NITYANAND KUMAWAT",
-        "date": "23-Nov-2026",
-        "name": "Gensol Engineering Ltd",
-        "qty": "303994",
-        "remarks": "-",
-        "symbol": "GENSOL",
-        "watp": "9.07"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "QE SECURITIES LLP",
-        "date": "23-Nov-2026",
-        "name": "Hi-Tech Pipes Limited",
-        "qty": "1052577",
-        "remarks": "-",
-        "symbol": "HITECH",
-        "watp": "85.99"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "CLT RESEARCH TECH PRIVATE LTD",
-        "date": "23-Nov-2026",
-        "name": "HMA Agro Industries Ltd",
-        "qty": "4189698",
-        "remarks": "-",
-        "symbol": "HMAAGRO",
-        "watp": "38.3"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "HRTI PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "HMA Agro Industries Ltd",
-        "qty": "3999229",
-        "remarks": "-",
-        "symbol": "HMAAGRO",
-        "watp": "37.83"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "HMA Agro Industries Ltd",
-        "qty": "4095454",
-        "remarks": "-",
-        "symbol": "HMAAGRO",
-        "watp": "37.88"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "HMA Agro Industries Ltd",
-        "qty": "6196618",
-        "remarks": "-",
-        "symbol": "HMAAGRO",
-        "watp": "37.58"
+        "symbol": "HUBTOWN",
+        "watp": "195.08"
       },
       {
         "buySell": "SELL",
         "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "HMA Agro Industries Ltd",
-        "qty": "5209491",
+        "date": "25-Nov-2026",
+        "name": "Ackruti City Limited",
+        "qty": "877980",
         "remarks": "-",
-        "symbol": "HMAAGRO",
-        "watp": "37.97"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "QE SECURITIES LLP",
-        "date": "23-Nov-2026",
-        "name": "HMA Agro Industries Ltd",
-        "qty": "4175255",
-        "remarks": "-",
-        "symbol": "HMAAGRO",
-        "watp": "37.6"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "NK SECURITIES RESEARCH PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "India Glycols Ltd",
-        "qty": "460057",
-        "remarks": "-",
-        "symbol": "INDIAGLYCO",
-        "watp": "295.77"
+        "symbol": "HUBTOWN",
+        "watp": "195.71"
       },
       {
         "buySell": "SELL",
         "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "India Glycols Ltd",
-        "qty": "607117",
+        "date": "25-Nov-2026",
+        "name": "Ackruti City Limited",
+        "qty": "1017154",
         "remarks": "-",
-        "symbol": "INDIAGLYCO",
-        "watp": "295.12"
+        "symbol": "HUBTOWN",
+        "watp": "195.11"
       },
       {
         "buySell": "SELL",
-        "clientName": "IRAGE BROKING SERVICES LLP",
-        "date": "23-Nov-2026",
-        "name": "India Glycols Ltd",
-        "qty": "472068",
+        "clientName": "QE SECURITIES LLP",
+        "date": "25-Nov-2026",
+        "name": "Ackruti City Limited",
+        "qty": "819748",
         "remarks": "-",
-        "symbol": "INDIAGLYCO",
-        "watp": "294.94"
+        "symbol": "HUBTOWN",
+        "watp": "194.55"
       },
       {
         "buySell": "SELL",
         "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "India Glycols Ltd",
-        "qty": "846596",
+        "date": "25-Nov-2026",
+        "name": "Ackruti City Limited",
+        "qty": "1146642",
         "remarks": "-",
-        "symbol": "INDIAGLYCO",
-        "watp": "295.03"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "India Glycols Ltd",
-        "qty": "679982",
-        "remarks": "-",
-        "symbol": "INDIAGLYCO",
-        "watp": "295.23"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "SACHIN GOVINDLAL MODI",
-        "date": "23-Nov-2026",
-        "name": "Italian Edibles Limited",
-        "qty": "138000",
-        "remarks": "-",
-        "symbol": "ITALIANE",
-        "watp": "24.46"
+        "symbol": "HUBTOWN",
+        "watp": "195.34"
       },
       {
         "buySell": "SELL",
         "clientName": "AKSHAY MAKHIJA",
-        "date": "23-Nov-2026",
+        "date": "25-Nov-2026",
         "name": "Italian Edibles Limited",
-        "qty": "100000",
+        "qty": "376000",
         "remarks": "-",
         "symbol": "ITALIANE",
-        "watp": "24.45"
+        "watp": "23.25"
       },
       {
         "buySell": "SELL",
-        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Jeena Sikho Lifecare Ltd",
-        "qty": "979426",
+        "clientName": "AJAY MAKHIJA",
+        "date": "25-Nov-2026",
+        "name": "Italian Edibles Limited",
+        "qty": "200000",
         "remarks": "-",
-        "symbol": "JSLL",
-        "watp": "329.41"
+        "symbol": "ITALIANE",
+        "watp": "23.25"
       },
       {
         "buySell": "SELL",
-        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Jeena Sikho Lifecare Ltd",
-        "qty": "1160939",
+        "clientName": "QE SECURITIES LLP",
+        "date": "25-Nov-2026",
+        "name": "Jupiter Wagons Limited",
+        "qty": "2149572",
         "remarks": "-",
-        "symbol": "JSLL",
-        "watp": "328.87"
+        "symbol": "JWL",
+        "watp": "208.56"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "J4S FINANCIAL SOLUTIONS LLP",
+        "date": "25-Nov-2026",
+        "name": "Kopran Ltd.",
+        "qty": "264473",
+        "remarks": "-",
+        "symbol": "KOPRAN",
+        "watp": "290.38"
       },
       {
         "buySell": "SELL",
         "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Jeena Sikho Lifecare Ltd",
-        "qty": "741388",
+        "date": "25-Nov-2026",
+        "name": "Kopran Ltd.",
+        "qty": "550671",
         "remarks": "-",
-        "symbol": "JSLL",
-        "watp": "328.7"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "QE SECURITIES LLP",
-        "date": "23-Nov-2026",
-        "name": "Jeena Sikho Lifecare Ltd",
-        "qty": "857062",
-        "remarks": "-",
-        "symbol": "JSLL",
-        "watp": "328.69"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "SATISH MEJIYATAR",
-        "date": "23-Nov-2026",
-        "name": "Kshitij Polyline Limited",
-        "qty": "400000",
-        "remarks": "-",
-        "symbol": "KSHITIJPOL",
-        "watp": "3.69"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "BHAVISHYA ECOMMERCE PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Kshitij Polyline Limited",
-        "qty": "1718211",
-        "remarks": "-",
-        "symbol": "KSHITIJPOL",
-        "watp": "3.69"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "STEADVIEW CAPITAL MAURITIUS LIMITED-FDI",
-        "date": "23-Nov-2026",
-        "name": "Lenskart Solutions Ltd",
-        "qty": "11520222",
-        "remarks": "-",
-        "symbol": "LENSKART",
-        "watp": "725"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "GEE BEE SECURITIES PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Mallcom (India) Limited",
-        "qty": "50000",
-        "remarks": "-",
-        "symbol": "MALLCOM",
-        "watp": "815"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "PEGASUS GROWTH FUND 1",
-        "date": "23-Nov-2026",
-        "name": "Newjaisa Technologies Ltd",
-        "qty": "237000",
-        "remarks": "-",
-        "symbol": "NEWJAISA",
-        "watp": "15.22"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "CAPRI GLOBAL VENTURES PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Pokarna Limited",
-        "qty": "225000",
-        "remarks": "-",
-        "symbol": "POKARNA",
-        "watp": "660.2"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ratnaveer Precision Eng L",
-        "qty": "1077569",
-        "remarks": "-",
-        "symbol": "RATNAVEER",
-        "watp": "393.68"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "INDIVAR FOUNDATION",
-        "date": "23-Nov-2026",
-        "name": "Ruchi Infrastructure Ltd.",
-        "qty": "2600000",
-        "remarks": "-",
-        "symbol": "RUCHINFRA",
-        "watp": "5"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Sunshine Pictures Limited",
-        "qty": "265462",
-        "remarks": "-",
-        "symbol": "SUNSHINE",
-        "watp": "517.59"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "PLUTUS WEALTH MANAGEMENT LLP",
-        "date": "23-Nov-2026",
-        "name": "Ugro Capital Limited",
-        "qty": "1028693",
-        "remarks": "-",
-        "symbol": "UGROCAP",
-        "watp": "82.26"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "CLT RESEARCH TECH PRIVATE LTD",
-        "date": "23-Nov-2026",
-        "name": "Ugro Capital Limited",
-        "qty": "879542",
-        "remarks": "-",
-        "symbol": "UGROCAP",
-        "watp": "82.58"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "NEWQUEST ASIA INVESTMENTS III LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ugro Capital Limited",
-        "qty": "1017257",
-        "remarks": "-",
-        "symbol": "UGROCAP",
-        "watp": "82.51"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "HRTI PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ugro Capital Limited",
-        "qty": "1502116",
-        "remarks": "-",
-        "symbol": "UGROCAP",
-        "watp": "82.58"
-      },
-      {
-        "buySell": "SELL",
-        "clientName": "QE SECURITIES LLP",
-        "date": "23-Nov-2026",
-        "name": "Ugro Capital Limited",
-        "qty": "1646204",
-        "remarks": "-",
-        "symbol": "UGROCAP",
-        "watp": "82.47"
+        "symbol": "KOPRAN",
+        "watp": "290.4"
       },
       {
         "buySell": "SELL",
         "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ugro Capital Limited",
-        "qty": "1494412",
+        "date": "25-Nov-2026",
+        "name": "Kopran Ltd.",
+        "qty": "627275",
         "remarks": "-",
-        "symbol": "UGROCAP",
-        "watp": "82.73"
+        "symbol": "KOPRAN",
+        "watp": "290.97"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "J4S FINANCIAL SOLUTIONS LLP",
+        "date": "25-Nov-2026",
+        "name": "Kopran Ltd.",
+        "qty": "360956",
+        "remarks": "-",
+        "symbol": "KOPRAN",
+        "watp": "290.85"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "QE SECURITIES LLP",
+        "date": "25-Nov-2026",
+        "name": "Kopran Ltd.",
+        "qty": "514277",
+        "remarks": "-",
+        "symbol": "KOPRAN",
+        "watp": "289.85"
       },
       {
         "buySell": "SELL",
         "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Ugro Capital Limited",
-        "qty": "1055807",
+        "date": "25-Nov-2026",
+        "name": "Kopran Ltd.",
+        "qty": "290964",
         "remarks": "-",
-        "symbol": "UGROCAP",
-        "watp": "82.7"
+        "symbol": "KOPRAN",
+        "watp": "291.54"
       },
       {
         "buySell": "SELL",
-        "clientName": "K L B SECURITIES PVT LTD",
-        "date": "23-Nov-2026",
-        "name": "Vineet Laboratories Ltd",
-        "qty": "100043",
+        "clientName": "BHAVISHYA ECOMMERCE PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Kshitij Polyline Limited",
+        "qty": "1245869",
         "remarks": "-",
-        "symbol": "VINEETLAB",
-        "watp": "38.55"
+        "symbol": "KSHITIJPOL",
+        "watp": "3.86"
       },
       {
         "buySell": "SELL",
-        "clientName": "ORION STOCKS LTD",
-        "date": "23-Nov-2026",
-        "name": "WE WIN LIMITED",
-        "qty": "55450",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Magellanic Cloud Limited",
+        "qty": "3567880",
         "remarks": "-",
-        "symbol": "WEWIN",
-        "watp": "44.89"
+        "symbol": "MCLOUD",
+        "watp": "24.84"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "DUNEARN INVESTMENTS (MAURITIUS) PTE LTD",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "4140435",
+        "remarks": "-",
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "DUNEARN INVESTMENTS (MAURITIUS) PTE LTD",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "2229465",
+        "remarks": "-",
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "RATHOD MANOJ CHHAGANLAL HUF",
+        "date": "25-Nov-2026",
+        "name": "North East Carry Corp Ltd",
+        "qty": "946001",
+        "remarks": "-",
+        "symbol": "NECCLTD",
+        "watp": "25.8"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "N E C C AUTOMOBILES PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "North East Carry Corp Ltd",
+        "qty": "1000000",
+        "remarks": "-",
+        "symbol": "NECCLTD",
+        "watp": "25.8"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Ratnaveer Precision Eng L",
+        "qty": "457847",
+        "remarks": "-",
+        "symbol": "RATNAVEER",
+        "watp": "400.83"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "KADIR FARUKQBHAI VOHRA",
+        "date": "25-Nov-2026",
+        "name": "Shalimar Paints Ltd",
+        "qty": "427000",
+        "remarks": "-",
+        "symbol": "SHALPAINTS",
+        "watp": "109.23"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "RIYABEN MANUBHAI SOLANKI",
+        "date": "25-Nov-2026",
+        "name": "Shalimar Paints Ltd",
+        "qty": "429388",
+        "remarks": "-",
+        "symbol": "SHALPAINTS",
+        "watp": "109.21"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "TEJAS P PANDYA",
+        "date": "25-Nov-2026",
+        "name": "Shalimar Paints Ltd",
+        "qty": "425000",
+        "remarks": "-",
+        "symbol": "SHALPAINTS",
+        "watp": "109.21"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "VINAYAK HIREMATH",
+        "date": "25-Nov-2026",
+        "name": "Skytech Infinite Platfm L",
+        "qty": "49600",
+        "remarks": "-",
+        "symbol": "SKYTECH",
+        "watp": "20.41"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "25-Nov-2026",
+        "name": "SMC Global Securities Ltd",
+        "qty": "1419951",
+        "remarks": "-",
+        "symbol": "SMCGLOBAL",
+        "watp": "80.78"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ARIHANT CAPITAL MARKETS LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Sunshine Pictures Limited",
+        "qty": "169378",
+        "remarks": "-",
+        "symbol": "SUNSHINE",
+        "watp": "526.47"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "MAYANK JAIN",
+        "date": "25-Nov-2026",
+        "name": "Swaraj Suiting Limited",
+        "qty": "173737",
+        "remarks": "-",
+        "symbol": "SWARAJ",
+        "watp": "360"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "NK SECURITIES RESEARCH PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Thomas Cook  (India)  Ltd",
+        "qty": "2731056",
+        "remarks": "-",
+        "symbol": "THOMASCOOK",
+        "watp": "146.04"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "JUNOMONETA FINSOL PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Thomas Cook  (India)  Ltd",
+        "qty": "2653935",
+        "remarks": "-",
+        "symbol": "THOMASCOOK",
+        "watp": "144.48"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "MICROCURVES TRADING PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Thomas Cook  (India)  Ltd",
+        "qty": "4304074",
+        "remarks": "-",
+        "symbol": "THOMASCOOK",
+        "watp": "144.87"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "ALPHAGREP SECURITIES PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Thomas Cook  (India)  Ltd",
+        "qty": "4612431",
+        "remarks": "-",
+        "symbol": "THOMASCOOK",
+        "watp": "143.95"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "QE SECURITIES LLP",
+        "date": "25-Nov-2026",
+        "name": "Thomas Cook  (India)  Ltd",
+        "qty": "5683894",
+        "remarks": "-",
+        "symbol": "THOMASCOOK",
+        "watp": "144.01"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "CLT RESEARCH TECH PRIVATE LTD",
+        "date": "25-Nov-2026",
+        "name": "Thomas Cook  (India)  Ltd",
+        "qty": "2746391",
+        "remarks": "-",
+        "symbol": "THOMASCOOK",
+        "watp": "145.33"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "AJAY PURSHOTTAMDAS GUPTA",
+        "date": "25-Nov-2026",
+        "name": "Urban Enviro Waste Mgmt L",
+        "qty": "304800",
+        "remarks": "-",
+        "symbol": "URBAN",
+        "watp": "70.16"
       }
     ],
-    "BULK_DEALS": "89",
+    "BULK_DEALS": "103",
     "SHORT_DEALS": "253",
-    "BLOCK_DEALS": "5",
+    "BLOCK_DEALS": "21",
     "SHORT_DEALS_DATA": [
       {
         "buySell": null,
@@ -3432,53 +3572,213 @@
     "BLOCK_DEALS_DATA": [
       {
         "buySell": "BUY",
-        "clientName": "SOCIETE GENERALE - ODI",
-        "date": "23-Nov-2026",
-        "name": "Lenskart Solutions Ltd",
-        "qty": "6176351",
+        "clientName": "ORBITELECTRICALS PRIVATE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Finolex Cables Ltd",
+        "qty": "460000",
         "remarks": null,
-        "symbol": "LENSKART",
-        "watp": "725"
+        "symbol": "FINCABLES",
+        "watp": "1159"
       },
       {
         "buySell": "BUY",
-        "clientName": "GOLDMAN SACHS INVESTMENTS MAURITIUS I LIMITED",
-        "date": "23-Nov-2026",
-        "name": "Lenskart Solutions Ltd",
-        "qty": "6176351",
+        "clientName": "RAJESH BHASKARAN NAIR",
+        "date": "25-Nov-2026",
+        "name": "Indegene Limited",
+        "qty": "381700",
         "remarks": null,
-        "symbol": "LENSKART",
-        "watp": "725"
+        "symbol": "INDGN",
+        "watp": "655"
       },
       {
         "buySell": "BUY",
-        "clientName": "GOLDMAN SACHS BANK EUROPESE-ODI",
-        "date": "23-Nov-2026",
-        "name": "Lenskart Solutions Ltd",
-        "qty": "345000",
+        "clientName": "SBI MUTUAL FUND",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "171235",
         "remarks": null,
-        "symbol": "LENSKART",
-        "watp": "725"
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "SBI MUTUAL FUND",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "171233",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "NORGES BANK ON ACCOUNT OF THE GOVERNMENT PENSION FUND GLOBAL",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "390400",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "HDFC MUTUAL FUND",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "2863074",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "HDFC MUTUAL FUND",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "1027397",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "KUWAIT INVESTMENT AUTHORITY",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "130530",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "NIPPON INDIA INVESTMENT UNIT TRUST - NIPPON INDIA EQUITY FUND",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "35337",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "NIPPON INDIA INVESTMENT UNIT TRUST - NIPPON INDIA SMALL AND MID-CAP EF",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "5366",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "NORGES BANK ON ACCOUNT OF THE GOVERNMENT PENSION FUND GLOBAL",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "390410",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "WHITEOAK CAPITAL MUTUAL FUND",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "171233",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "WHITEOAK CAPITAL MUTUAL FUND",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "171240",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "CANARA ROBECO MUTUAL FUND",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "171233",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "CITIGROUP GLOBAL MARKETS SINGAPORE PTE LIMITED",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "205479",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "DSP INDIA FUND IFSC",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "294500",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "BUY",
+        "clientName": "GOLDMAN SACHS BANK EUROPE SE",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "171233",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
       },
       {
         "buySell": "SELL",
-        "clientName": "STEADVIEW CAPITAL MAURITIUS LIMITED-FDI",
-        "date": "23-Nov-2026",
-        "name": "Lenskart Solutions Ltd",
-        "qty": "11520222",
+        "clientName": "ARUNA MUKESH KATARA",
+        "date": "25-Nov-2026",
+        "name": "Finolex Cables Ltd",
+        "qty": "460000",
         "remarks": null,
-        "symbol": "LENSKART",
-        "watp": "725"
+        "symbol": "FINCABLES",
+        "watp": "1159"
       },
       {
         "buySell": "SELL",
-        "clientName": "LTR FOCUS FUND-FDI",
-        "date": "23-Nov-2026",
-        "name": "Lenskart Solutions Ltd",
-        "qty": "1177480",
+        "clientName": "AARABHI PARTNERS CONSULTANTS LLP",
+        "date": "25-Nov-2026",
+        "name": "Indegene Limited",
+        "qty": "381700",
         "remarks": null,
-        "symbol": "LENSKART",
-        "watp": "725"
+        "symbol": "INDGN",
+        "watp": "655"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "DUNEARN INVESTMENTS (MAURITIUS) PTE LTD",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "4140435",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
+      },
+      {
+        "buySell": "SELL",
+        "clientName": "DUNEARN INVESTMENTS (MAURITIUS) PTE LTD",
+        "date": "25-Nov-2026",
+        "name": "Global Health Limited",
+        "qty": "2229465",
+        "remarks": null,
+        "symbol": "MEDANTA",
+        "watp": "1460"
       }
     ]
   }
